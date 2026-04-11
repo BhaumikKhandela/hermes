@@ -1,9 +1,11 @@
 "use client";
 
+import HermesAIBuilder from "@/components/workflow/HermesAIBuilder";
+
 export default function Page() {
   return (
-    <div>
-      <h1>Workflow page</h1>
+    <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-900">
+      <HermesAIBuilder />
     </div>
   );
 }
