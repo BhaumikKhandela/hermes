@@ -1,3 +1,4 @@
+import { ConflictError, NotFoundError } from "@/lib/errors/http-errors";
 import { Project } from "@/models/ProjectSchema";
 
 export type ProjectTypeProps = {
@@ -26,9 +27,12 @@ export class ProjectService {
     return newProject.toObject();
   }
 
-  async updateProjects(props: { id: string; name: string; userId?: string }) {
-    const updateNote = await Project.findByIdAndUpdate(
-      props.id,
+  async updateProjects(props: { id: string; name: string; userId: string }) {
+    const updateNote = await Project.findOneAndUpdate(
+        {
+            _id: props.id,
+            userId: props.userId
+        },
       {
         name: props.name,
       },
@@ -37,11 +41,17 @@ export class ProjectService {
         runValidators: true,
       },
     );
+    if (!updateNote) {
+      throw new NotFoundError("Project not found or unauthorized");
+    }
     return updateNote;
   }
 
   async getSingleProject(projectId: string) {
     const project = await Project.findById(projectId);
+    if (!project) {
+        throw new NotFoundError("Project not found");
+    }
     return project;
   }
 
