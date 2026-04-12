@@ -8,7 +8,9 @@ import {
   SidebarIcon,
   Wand2Icon,
 } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import UpdateProjectTitle from "./UpdateProjectTitle";
 
 export default function HermesAIBuilder() {
   const [activeTab, setActiveTab] = useState("Visual Editor");
@@ -45,6 +47,9 @@ export default function HermesAIBuilder() {
       document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging]);
+
+  const params = useParams();
+  const projectId = params?.projectId as string;
 
   return (
     <div className="flex h-screen bg-white text-slate-900 font-sans overflow-hidden">
@@ -155,10 +160,7 @@ export default function HermesAIBuilder() {
             >
               <SidebarIcon size={18} />
             </button>
-
-            <h1 className="font-medium text-slate-800 text-sm">
-              Untitled Project
-            </h1>
+            <UpdateProjectTitle projectId={projectId} initialTitle={"Untitled Project"} />
           </div>
 
           <button className="bg-red-500 text-white p-1.5 rounded-md hover:bg-red-600 active:scale-95 transition">

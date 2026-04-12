@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 import { connectDB } from "./mongodb";
 
 export function withAuth<
-  T extends (req: Request, session: any) => Promise<Response>
+  T extends (...args: any[]) => Promise<Response>
 >(fn: T) {
-  return async (req: Request): Promise<Response> => {
+  return async (...args: Parameters<T>): Promise<Response> => {
     try {
       const session = await auth.api.getSession({
         headers: await headers(),
@@ -21,7 +21,7 @@ export function withAuth<
 
       await connectDB();
 
-      return await fn(req, session);
+      return await fn(...args, session);
     } catch (error: any) {
       return NextResponse.json(
         { error: error?.message || "Internal Server Error" },
