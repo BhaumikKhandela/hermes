@@ -3,10 +3,10 @@ import { auth } from "../auth/auth";
 import { NextResponse } from "next/server";
 import { connectDB } from "./mongodb";
 
-export function withAuth<T extends (...args: any[]) => Promise<Response>>(
-  fn: T,
-): T {
-  return (async (...args: any[]) => {
+export function withAuth<
+  T extends (req: Request, session: any) => Promise<Response>
+>(fn: T) {
+  return async (req: Request): Promise<Response> => {
     try {
       const session = await auth.api.getSession({
         headers: await headers(),
@@ -14,29 +14,19 @@ export function withAuth<T extends (...args: any[]) => Promise<Response>>(
 
       if (!session?.user) {
         return NextResponse.json(
-          {
-            error: "Unauthorized",
-          },
-          {
-            status: 401,
-          },
+          { error: "Unauthorized" },
+          { status: 401 }
         );
       }
 
       await connectDB();
 
-      return await fn(...args);
+      return await fn(req, session);
     } catch (error: any) {
-      console.error("Server error:", error);
-      const message = error?.message || "Internal Server Error";
       return NextResponse.json(
-        {
-          error: message,
-        },
-        {
-          status: error?.status || 500,
-        },
+        { error: error?.message || "Internal Server Error" },
+        { status: error?.status || 500 }
       );
     }
-  }) as T;
+  };
 }
