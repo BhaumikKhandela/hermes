@@ -7,21 +7,45 @@ import { createProject } from "@/lib/client/api/project";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/auth-client";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/stores";
+import { fetchProjects } from "@/stores/ProjectSlice";
+import ProjectList from "@/components/project/ProjectList";
 export default function Page() {
   const { data: session, isPending } = authClient.useSession();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
   const createAProject = async () => {
     if (isPending) return;
     if (session) {
+      setLoading(true);
       const data = await createProject();
       if (data) {
+        setLoading(false);
         router.push(`/workflows/${data.project._id}`);
       }
     } else {
+      setLoading(false);
       toast.error("Please login again to continue");
       router.push(`/login`);
     }
   };
+
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+
+  const dispatch = useDispatch<AppDispatch>();
+  const { projects } = useSelector((state: RootState) => state.project);
+
+  const { pagination } = projects;
+  const totalPages = pagination?.totalPages ?? 1;
+
+  useEffect(() => {
+    dispatch(fetchProjects({ page, search }));
+  }, [page]);
+
   return (
     <div className="h-screen flex flex-col bg-slate-50 dark:bg-gray-900">
       <TopNav />
@@ -34,14 +58,17 @@ export default function Page() {
             <Button
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
               onClick={createAProject}
-              disabled={isPending}
+              disabled={isPending || loading}
             >
               <PlusIcon className="h-4 w-4" />
-              New Project
+              {loading ? "Creating..." : "New Project"}
             </Button>
           </div>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <ProjectList projects={projects?.projects} />
+        </div>
       </main>
     </div>
   );
