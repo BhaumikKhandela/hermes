@@ -8,16 +8,40 @@ import {
   SidebarIcon,
   Wand2Icon,
 } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import UpdateProjectTitle from "./UpdateProjectTitle";
+import ChatPanel from "./chat/ChatPanel";
+import { authClient } from "@/lib/auth/auth-client";
 
 export default function HermesAIBuilder() {
-  const [activeTab, setActiveTab] = useState("Visual Editor");
+  const router = useRouter();
 
+  const [activeTab, setActiveTab] = useState("Visual Editor");
   const [isChatOpen, setIsChatOpen] = useState(true);
   const [chatWidth, setChatWidth] = useState(320);
   const [isDragging, setIsDragging] = useState(false);
+
+  const params = useParams();
+  const projectId = params?.projectId as string;
+
+  const { data: session, isPending } = authClient.useSession();
+
+  useEffect(() => {
+    if (!isPending && !session?.user?.id) {
+      router.push("/login");
+    }
+  }, [isPending, session, router]);
+
+  if (isPending) {
+    return <BuilderSkeleton />;
+  }
+
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  const userId = session.user.id;
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -48,9 +72,6 @@ export default function HermesAIBuilder() {
     };
   }, [isDragging]);
 
-  const params = useParams();
-  const projectId = params?.projectId as string;
-
   return (
     <div className="flex h-screen bg-white text-slate-900 font-sans overflow-hidden">
       {/* SIDEBAR */}
@@ -60,78 +81,12 @@ export default function HermesAIBuilder() {
         ${isChatOpen ? "border-r border-slate-200" : ""}
         ${!isDragging ? "transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]" : ""}`}
       >
-        <div
-          style={{ width: `${chatWidth}px` }}
-          className="flex flex-col h-full"
-        >
-          {/* HEADER */}
-          <div className="h-14 border-b border-slate-200 flex items-center justify-between px-4 shrink-0">
-            <div className="flex items-center gap-2 font-semibold text-base tracking-tight">
-              <span className="italic">Hermes</span>
-              <span className="text-red-500 italic">AI</span>
-            </div>
+        <ChatPanel
+          projectId={projectId}
+          userId={userId}
+          chatWidth={chatWidth}
+        />
 
-            <button className="p-1.5 rounded-md text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:scale-95 transition">
-              <PlusIcon size={18} />
-            </button>
-          </div>
-
-          {/* CHAT */}
-          <div className="flex-1 overflow-y-auto px-4 py-5 space-y-6 scrollbar-thin scrollbar-thumb-slate-300">
-            {/* USER MESSAGE */}
-            <div className="flex justify-end">
-              <div className="bg-white border border-slate-200 px-4 py-2 rounded-2xl shadow-sm text-sm leading-relaxed max-w-[80%]">
-                hello
-              </div>
-            </div>
-
-            {/* AI MESSAGE */}
-            <div className="bg-slate-100/60 rounded-2xl p-4 text-sm space-y-3 border border-slate-100 shadow-sm">
-              <div className="flex items-center gap-2 text-blue-600 font-medium">
-                <PlayIcon size={14} className="fill-current" />
-                <span>Thought process</span>
-              </div>
-
-              <p className="text-slate-700 leading-relaxed">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                Repudiandae fuga commodi beatae.
-              </p>
-
-              <p className="text-slate-600">
-                What automation task would you like to work with?
-              </p>
-            </div>
-          </div>
-
-          {/* INPUT */}
-          <div className="p-4 border-t border-slate-200 bg-slate-50 shrink-0">
-            <div className="border border-slate-200 rounded-2xl p-3 shadow-sm focus-within:ring-2 focus-within:ring-slate-300 transition">
-              <textarea
-                placeholder="Ask, build... (Shift + Enter for new line)"
-                className="w-full text-sm resize-none outline-none max-h-32 min-h-[40px] leading-relaxed placeholder:text-slate-400"
-                rows={2}
-              />
-
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200">
-                <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md active:scale-95 transition">
-                  <Wand2Icon size={16} />
-                </button>
-
-                <div className="flex items-center gap-1">
-                  <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md active:scale-95 transition">
-                    <PaperclipIcon size={16} />
-                  </button>
-
-                  <button className="flex items-center gap-1 bg-slate-900 text-white px-3 py-1.5 rounded-lg text-sm hover:opacity-90 active:scale-95 transition">
-                    Send <ArrowUpIcon size={14} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* RESIZE HANDLE */}
         {isChatOpen && (
           <div
             onMouseDown={(e) => {
@@ -147,7 +102,6 @@ export default function HermesAIBuilder() {
 
       {/* MAIN */}
       <main className="flex-1 flex flex-col min-w-0 h-full">
-        {/* HEADER */}
         <header className="h-14 border-b border-slate-200 flex items-center justify-between px-4 shrink-0">
           <div className="flex items-center gap-3">
             <button
@@ -160,7 +114,11 @@ export default function HermesAIBuilder() {
             >
               <SidebarIcon size={18} />
             </button>
-            <UpdateProjectTitle projectId={projectId} initialTitle={"Untitled Project"} />
+
+            <UpdateProjectTitle
+              projectId={projectId}
+              initialTitle={"Untitled Project"}
+            />
           </div>
 
           <button className="bg-red-500 text-white p-1.5 rounded-md hover:bg-red-600 active:scale-95 transition">
@@ -168,6 +126,33 @@ export default function HermesAIBuilder() {
           </button>
         </header>
       </main>
+    </div>
+  );
+}
+
+function BuilderSkeleton() {
+  return (
+    <div className="flex h-screen animate-pulse">
+      <div className="w-[320px] bg-slate-100 border-r border-slate-200 p-4 space-y-4">
+        <div className="h-6 bg-slate-200 rounded w-2/3" />
+        <div className="h-4 bg-slate-200 rounded w-full" />
+        <div className="h-4 bg-slate-200 rounded w-5/6" />
+        <div className="h-4 bg-slate-200 rounded w-3/4" />
+      </div>
+
+      <div className="flex-1 flex flex-col">
+        <div className="h-14 border-b border-slate-200 flex items-center px-4 gap-3">
+          <div className="h-6 w-6 bg-slate-200 rounded" />
+          <div className="h-5 w-40 bg-slate-200 rounded" />
+        </div>
+
+        <div className="flex-1 p-6 space-y-4">
+          <div className="h-6 bg-slate-200 rounded w-1/3" />
+          <div className="h-4 bg-slate-200 rounded w-full" />
+          <div className="h-4 bg-slate-200 rounded w-5/6" />
+          <div className="h-4 bg-slate-200 rounded w-2/3" />
+        </div>
+      </div>
     </div>
   );
 }
