@@ -65,3 +65,28 @@ export async function getProjects(
   );
   return data;
 }
+
+export type ChatMessage = {
+  role: "ai" | "user";
+  content: string;
+  thinking: string;
+  userId: string;
+  projectId: string;
+};
+
+export type ChatHistoryReturnType = { messages: ChatMessage[] };
+export interface IFetchChatHistoryType {
+  userId: string;
+  projectId: string;
+}
+
+export async function fetchChatHistory(
+  props: IFetchChatHistoryType,
+): Promise<ChatHistoryReturnType> {
+  const { userId, projectId } = props;
+  const data = await makeHttpReq<unknown, ChatHistoryReturnType>(
+    "GET",
+    `chat-history?userId=${userId}&projectId=${projectId}`,
+  );
+  return data;
+}
