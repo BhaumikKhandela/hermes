@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import ChatInput from "./chatInput";
+import ChatInput from "./ChatInput";
 import { ChatMessages } from "./ChatMessages";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -30,9 +30,7 @@ const ChatPanel = ({
   const { messages } = useSelector((state: RootState) => state.chat);
 
   useEffect(() => {
-    if (userId) {
-      dispatch(getChatHistory({ userId, projectId }));
-    }
+    dispatch(getChatHistory({ userId, projectId }));
   }, [userId, dispatch]);
 
   const userMessageRef = useRef<string[]>([]);
