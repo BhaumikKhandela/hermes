@@ -8,7 +8,7 @@ import { MEMORY_AGENT_SYSTEM_PROMPT } from "./prompts/prompts";
 export async function createMemoryAgent({
   memoryRoot = path.resolve(process.cwd(), "public", "memory"),
   model = "",
-  modelContextLimit = 2000,
+  modelContextLimit = 3000,
   userId = "",
   projectId = "",
 } = {}) {
