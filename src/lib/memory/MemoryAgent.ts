@@ -4,14 +4,22 @@ import { MemoryManager } from "./MemoryManager";
 import { ContextAssembler } from "./ContextAssembler";
 import { buildFileSystemTools } from "./tools/memoryFSTools";
 import { MEMORY_AGENT_SYSTEM_PROMPT } from "./prompts/prompts";
+import type { ChatCerebras } from "@langchain/cerebras";
+import type { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 
 export async function createMemoryAgent({
   memoryRoot = path.resolve(process.cwd(), "public", "memory"),
-  model = "",
+  model,
   modelContextLimit = 3000,
   userId = "",
   projectId = "",
-} = {}) {
+}: {
+  model: ChatCerebras | ChatFireworks;
+  userId?: string;
+  projectId?: string;
+  memoryRoot?: string;
+  modelContextLimit?: number;
+}) {
   const memoryManager = new MemoryManager(memoryRoot, { userId, projectId });
 
   await memoryManager.init();
@@ -36,7 +44,7 @@ export async function createMemoryAgent({
 
     const stream = await agent.stream(
       { messages: [{ role: "user", content: assembled.prompt }] },
-      { streamMode: "messages" },
+      { streamMode: "updates" },
     );
 
     return stream;
@@ -52,6 +60,6 @@ export async function createMemoryAgent({
 
   return {
     streamAgent,
-    logLastAIMsg
-  }
+    logLastAIMsg,
+  };
 }
