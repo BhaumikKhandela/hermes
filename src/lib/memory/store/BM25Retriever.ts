@@ -3,7 +3,6 @@ import { BM25Retriever } from "@langchain/community/retrievers/bm25";
 
 import { Document } from "@langchain/core/documents";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
-import { createAgent } from "langchain";
 import { extractRelevantDocument } from "./bm25Extractor";
 
 export const formatDocumentsAsString = (documents: Document[]) => {
