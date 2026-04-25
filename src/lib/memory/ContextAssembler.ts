@@ -49,25 +49,9 @@ export class ContextAssembler {
     );
     const todayLog = await this.memory.readToday(new Date());
 
-    let relevantLongTermMemory = "";
-    // fetch data from Vector DBs (pinecone and bm25)
-    const archiveLog = await this.memory.readArchiveFile();
-
-    const vectorData = await queryMultiVector({
-      userId: this.userData.userId,
-      query: userQuery,
-    });
-    const docTOString = formatDocumentsAsString(vectorData?.retrievedDocs);
-    relevantLongTermMemory += `\n\n#<data_retrieved_from_vector_db> \n${docTOString}\n\n</data_retrieved_from_vector_db>`;
-    if (archiveLog.exist) {
-      const bm25Data = await bm25Retriever(archiveLog.data, userQuery);
-      relevantLongTermMemory += `\n\n#<data_retrieved_from_daily_log_archive> ${bm25Data}</data_retrieved_from_daily_log_archive>`;
-    }
-
     const fixedLayers = [
       `# System Layer\n${systemPrompt}`,
       `# Profile Layer\n${userProfile}`,
-      `# Relevant LTM Layer\n${relevantLongTermMemory || "No relevant long-term memories found."}`,
       `# Recent STM Layer\n${todayLog}`,
     ];
 

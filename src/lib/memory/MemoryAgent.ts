@@ -6,6 +6,8 @@ import { buildFileSystemTools } from "./tools/memoryFSTools";
 import { MEMORY_AGENT_SYSTEM_PROMPT } from "./prompts/prompts";
 import type { ChatCerebras } from "@langchain/cerebras";
 import type { ChatFireworks } from "@langchain/community/chat_models/fireworks";
+import { retrieveRelevantLTMTool } from "./tools/retrieveLTMTool";
+import { toolMonitoringMiddleware } from "./middleware/toolMonitoringMiddleware";
 
 export async function createMemoryAgent({
   memoryRoot = path.resolve(process.cwd(), "public", "memory"),
@@ -34,8 +36,9 @@ export async function createMemoryAgent({
 
   const agent = createAgent({
     model,
-    tools: [writeLTMTool],
+    tools: [writeLTMTool, retrieveRelevantLTMTool],
     systemPrompt: MEMORY_AGENT_SYSTEM_PROMPT,
+    middleware: [toolMonitoringMiddleware],
   });
 
   async function streamAgent(userInput: string) {
@@ -44,7 +47,13 @@ export async function createMemoryAgent({
 
     const stream = await agent.stream(
       { messages: [{ role: "user", content: assembled.prompt }] },
-      { streamMode: "updates" },
+      {
+        streamMode: "updates",
+        configurable: {
+          userId,
+          projectId,
+        },
+      },
     );
 
     return stream;
