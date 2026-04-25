@@ -1,4 +1,5 @@
 import { LLM } from "@/lib/llm/LLM";
+import { createMemoryAgent } from "@/lib/memory/MemoryAgent";
 import { withErrorHandler } from "@/lib/mongodb/withErrorHandler";
 import { writeToChatHistoryTool } from "@/lib/tools/chatHistoryTool";
 import { ContentBlock, createAgent } from "langchain";
@@ -14,11 +15,12 @@ export const POST = withErrorHandler(async (req: Request) => {
 
     const llm = LLM.getInstance("cerebras");
 
-    const streamAgent = createAgent({
+    const { streamAgent, logLastAIMsg } = await createMemoryAgent({
+      userId,
+      projectId,
       model: llm,
-      systemPrompt: "You are helpful AI Assitant",
     });
-
+    const streamMemoryAgent = await streamAgent(message);
     const encoder = new TextEncoder();
 
     const sse = (event: string, data: any) =>
@@ -34,10 +36,7 @@ export const POST = withErrorHandler(async (req: Request) => {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of await streamAgent.stream(
-            { messages: [{ role: "user", content: message }] },
-            { streamMode: "updates" },
-          )) {
+          for await (const chunk of streamMemoryAgent) {
             const updates = chunk?.tools?.messages;
             const req = chunk?.model_request?.messages;
 
@@ -92,6 +91,7 @@ export const POST = withErrorHandler(async (req: Request) => {
               },
             ],
           });
+          await logLastAIMsg(streamingText);
           controller.enqueue(sse("end", { ok: true }));
           controller.close();
         } catch (error) {
