@@ -1,10 +1,11 @@
 import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { ChatCerebras } from "@langchain/cerebras";
 
-type LLMType = "fireworks" | "cerebras";
+type LLMType = "fireworks" | "cerebras" | "cerebras_llama";
 type LLMInstanceMap = {
   fireworks: ChatFireworks;
   cerebras: ChatCerebras;
+  cerebras_llama: ChatCerebras;
 };
 
 export class LLM {
@@ -24,6 +25,16 @@ export class LLM {
           }
           LLM.instances[type] = new ChatFireworks({
             model: "accounts/fireworks/models/qwen3-v1-30b-a3b-thinking",
+            temperature: 0.7,
+            apiKey: process.env.FIRE_WORKS_API_KEY,
+          }) as LLMInstanceMap[T];
+          break;
+        case "cerebras_llama":
+          if (!process.env.CEREBRAS_API_KEY) {
+            throw new Error("CEREBRAS_API_KEY is not set");
+          }
+          LLM.instances[type] = new ChatCerebras({
+            model: "llama3.1-8b", 
             temperature: 0.7,
             apiKey: process.env.FIRE_WORKS_API_KEY,
           }) as LLMInstanceMap[T];
@@ -49,3 +60,4 @@ export class LLM {
 
 export const cerebrasModel = LLM.getInstance("cerebras");
 export const fireworksModel = LLM.getInstance("fireworks");
+export const cerebrasLlamaModel = LLM.getInstance("cerebras_llama");
