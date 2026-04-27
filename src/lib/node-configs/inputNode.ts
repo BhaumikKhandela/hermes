@@ -29,11 +29,6 @@ export function inputNodeConfig(props: nodeConfigProps) {
             },
           ],
         },
-        {
-          name: "left",
-          type: "target",
-          LinkTo: [],
-        },
       ],
     },
   } as any;
