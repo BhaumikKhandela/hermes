@@ -1,3 +1,4 @@
+import { autoConnect } from "@/helper/autoConnect";
 import { agentNodeConfig } from "@/lib/node-configs/agentNode";
 import { embeddingModelNodeConfig } from "@/lib/node-configs/embeddingModelNode";
 import { inputNodeConfig } from "@/lib/node-configs/inputNode";
@@ -117,10 +118,15 @@ export const agentBuilderSlice = createSlice({
 
       state.nodes = newNodes;
     },
+
+    handleAutoConnect(state) {
+      const generatedEdges = autoConnect(state.nodes);
+      state.edges = generatedEdges;
+    },
   },
 });
 
-export const { buildNodes, onNodesChange, onEdgesChange } =
+export const { buildNodes, onNodesChange, onEdgesChange, handleAutoConnect } =
   agentBuilderSlice.actions;
 
 export default agentBuilderSlice.reducer;
