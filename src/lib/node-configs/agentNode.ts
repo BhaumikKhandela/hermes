@@ -26,11 +26,12 @@ export function agentNodeConfig(props: nodeConfigProps) {
           type: "source",
           LinkTo: [
             { nodeName: "tool", handlePosition: "top" },
-            { nodeName: "modelNode", handlePostion: "bottom" },
+            { nodeName: "modelNode", handlePosition: "top" },
           ],
         },
       ],
     },
   } as any;
+
   return agentConfigNode;
 }
