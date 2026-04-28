@@ -7,22 +7,35 @@ import { glob as globFn } from "glob";
 const ROOT = process.cwd();
 const BASE_DIR = path.join(ROOT, "public", "agent-builder");
 
+// helper (added, no impact on structure)
+function isPathSafe(resolvedPath: string) {
+  const relative = path.relative(BASE_DIR, resolvedPath);
+  return !(relative.startsWith("..") || path.isAbsolute(relative));
+}
+
+function ok(data: string) {
+  return JSON.stringify({ success: true, data });
+}
+
+function fail(error: string) {
+  return JSON.stringify({ success: false, error });
+}
+
 export const write_file = tool(
   async ({ filename, content }) => {
     try {
       const fullPath = path.join(BASE_DIR, filename);
 
-      // Ensure directory exists
       await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
-
-      // Write file (overwrite if exists)
       await fs.promises.writeFile(fullPath, content, "utf-8");
 
-      return JSON.stringify({
-        message: `Successfully wrote to ${filename} characters :${content.length}`,
-      });
-    } catch (error: any) {
-      return `Error writing file: ${error.message}`;
+      return ok(
+        `Successfully wrote to ${filename} characters :${content.length}`,
+      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unknown write error";
+      return fail(`Error writing file: ${message}`);
     }
   },
   {
@@ -61,14 +74,8 @@ export const write_file = tool(
     - Write reports or research results
     `,
     schema: z.object({
-      filename: z
-        .string()
-        .describe(
-          "Target file path or filename. Can be a simple filename (e.g. 'report.md')",
-        ),
-      content: z
-        .string()
-        .describe("The full text content that will be written into the file."),
+      filename: z.string(),
+      content: z.string(),
     }),
   },
 );
@@ -94,7 +101,7 @@ export const grep = tool(
       } catch (err: unknown) {
         const message =
           err instanceof Error ? err.message : "Unknown directory read error";
-        throw new Error(`Failed to read directory "${dir}": ${message}`);
+        return;
       }
 
       for (const entry of entries) {
@@ -103,30 +110,18 @@ export const grep = tool(
         if (entry.isDirectory()) {
           await walk(entryPath);
         } else if (entry.isFile()) {
-          let content: string;
-
           try {
-            content = await fs.promises.readFile(entryPath, "utf-8");
-          } catch (err: unknown) {
-            const message =
-              err instanceof Error ? err.message : "Unknown file read error";
+            const content = await fs.promises.readFile(entryPath, "utf-8");
+            const lines = content.split("\n");
 
-            // skip unreadable files but don’t crash entire search
-            results.push(
-              `[ERROR] ${path.relative(BASE_DIR, entryPath)}: ${message}`,
-            );
-            continue;
-          }
-
-          const lines = content.split("\n");
-
-          lines.forEach((line, index) => {
-            if (regex.test(line)) {
-              results.push(
-                `${path.relative(BASE_DIR, entryPath)}:${index + 1}: ${line.trim()}`,
-              );
-            }
-          });
+            lines.forEach((line, index) => {
+              if (regex.test(line)) {
+                results.push(
+                  `${path.relative(BASE_DIR, entryPath)}:${index + 1}: ${line.trim()}`,
+                );
+              }
+            });
+          } catch {}
         }
       }
     }
@@ -135,14 +130,13 @@ export const grep = tool(
       await walk(fullPath);
 
       if (results.length === 0) {
-        return `No matches found for pattern: "${pattern}"`;
+        return ok(`No matches found for pattern: "${pattern}"`);
       }
 
-      return results.join("\n");
+      return ok(results.join("\n"));
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown grep error";
-
-      return `Error during grep: ${message}`;
+      return fail(`Error during grep: ${message}`);
     }
   },
   {
@@ -163,8 +157,8 @@ export const read_file = tool(
     try {
       const resolvedPath = path.resolve(BASE_DIR, filename);
 
-      if (!resolvedPath.startsWith(BASE_DIR)) {
-        throw new Error("Access outside allowed directory is not permitted.");
+      if (!isPathSafe(resolvedPath)) {
+        return fail("Access outside allowed directory is not permitted.");
       }
 
       const content = await fs.promises.readFile(resolvedPath, "utf-8");
@@ -178,16 +172,17 @@ export const read_file = tool(
         )
         .join("\n");
 
-      // Check if more lines exist
       if (offset + limit < lines.length) {
         const remaining = lines.length - (offset + limit);
-        return `${formatted}\n\n[... ${remaining} more lines. Use offset=${offset + limit}]`;
+        return ok(
+          `${formatted}\n\n[... ${remaining} more lines. Use offset=${offset + limit}]`,
+        );
       }
 
-      return `${formatted}`;
+      return ok(formatted);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown read error";
-      return `Error reading file: ${message}`;
+      return fail(`Error reading file: ${message}`);
     }
   },
   {
@@ -201,9 +196,7 @@ export const read_file = tool(
     - Works with toolConfig.writer to stream content.
     `,
     schema: z.object({
-      filename: z
-        .string()
-        .describe("Filename to read relative to project root"),
+      filename: z.string(),
       offset: z.number().min(0).optional().default(0),
       limit: z.number().min(1).optional().default(100),
     }),
@@ -215,36 +208,35 @@ export const edit_file = tool(
     try {
       const resolvedPath = path.resolve(BASE_DIR, filename);
 
-      // Prevent directory traversal
-      if (!resolvedPath.startsWith(BASE_DIR)) {
-        throw new Error("Access outside allowed directory is not permitted");
+      if (!isPathSafe(resolvedPath)) {
+        return fail("Access outside allowed directory is not permitted");
       }
 
       const content = await fs.promises.readFile(resolvedPath, "utf8");
 
       if (!content.includes(old_str)) {
-        return `Error: Exact match for 'old_str' not found in ${filename}. No `;
+        return fail(
+          `Error: Exact match for 'old_str' not found in ${filename}. No changes made.`,
+        );
       }
 
       const updatedContent = content.replace(old_str, new_str);
-
       await fs.promises.writeFile(resolvedPath, updatedContent, "utf8");
 
-      return `Successfully updated ${filename}.`;
+      return ok(`Successfully updated ${filename}.`);
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Unknown edit error";
-
-      return `Error editing file: ${message}`;
+      return fail(`Error editing file: ${message}`);
     }
   },
   {
     name: "edit_file",
     description: "Find and replace a specific string within a file.",
     schema: z.object({
-      filename: z.string().describe("filename to edit"),
-      old_str: z.string().describe("Exact text to find"),
-      new_str: z.string().describe("Text to replace it with"),
+      filename: z.string(),
+      old_str: z.string(),
+      new_str: z.string(),
     }),
   },
 );
@@ -254,9 +246,10 @@ export const ls = tool(
     try {
       const resolvedPath = path.resolve(BASE_DIR, targetPath);
 
-      // Prevent directory traversal
-      if (!resolvedPath.startsWith(BASE_DIR)) {
-        return "<think> Access outside allowed directory is not permitted</think>";
+      if (!isPathSafe(resolvedPath)) {
+        return ok(
+          "<think> Access outside allowed directory is not permitted</think>",
+        );
       }
 
       const entries = await fs.promises.readdir(resolvedPath, {
@@ -264,12 +257,12 @@ export const ls = tool(
       });
 
       if (entries.length === 0) {
-        return "<think>Directory is empty.</think>";
+        return ok("<think>Directory is empty.</think>");
       }
 
-      // Build top-level Markdown table
       const header =
         "| Name | Type | Extension | Children Count |\n|-------|-------|------|-------|";
+
       const rows = entries.map((entry) => {
         if (entry.isDirectory()) {
           return `<think>| ${entry.name} | folder | | 0 |</think>`;
@@ -278,11 +271,11 @@ export const ls = tool(
         }
       });
 
-      return `<think>${[header, ...rows].join("\n")}</think>`;
+      return ok(`<think>${[header, ...rows].join("\n")}</think>`);
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Unknown ls error";
-      return `<think>Error listing directory: ${message}</think>`;
+      return ok(`<think>Error listing directory: ${message}</think>`);
     }
   },
   {
@@ -305,10 +298,7 @@ export const ls = tool(
     - Default to project root "." if no path provided
     `,
     schema: z.object({
-      path: z
-        .string()
-        .optional()
-        .describe("Relative path inside project folder. Defaults to '.'"),
+      path: z.string().optional(),
     }),
   },
 );
@@ -318,18 +308,18 @@ export const glob = tool(
     try {
       const matches = await globFn(pattern, {
         cwd: BASE_DIR,
-        ignore: ["**//node_modules/**"],
+        ignore: ["**/node_modules/**"],
       });
 
       if (matches.length === 0) {
-        return `No matches for pattern "${pattern}" inside ${BASE_DIR}`;
+        return ok(`No matches for pattern "${pattern}" inside ${BASE_DIR}`);
       }
 
-      return matches.join("\n");
+      return ok(matches.join("\n"));
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Unknown glob error";
-      return `Error performing glob: ${message}`;
+      return fail(`Error performing glob: ${message}`);
     }
   },
   {
@@ -373,14 +363,14 @@ export const glob = tool(
         }
         
         Example 3:
-        User: "Find all files named page.tsx
+        User: "Find all files named page.tsx"
         Call:
         {
-        "pattern": "**/pages.tsx"
+        "pattern": "**/page.tsx"
         }
         
         Example 4:
-        User: "Search for all config files
+        User: "Search for all config files"
         Call:
         {
         "pattern": "**/*config*.*"
@@ -390,7 +380,6 @@ export const glob = tool(
         - A newline-separated list of relative file paths
         - Or a message of no matches are found
         `,
-
     schema: z.object({
       pattern: z.string(),
     }),
