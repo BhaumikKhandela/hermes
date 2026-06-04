@@ -60,10 +60,14 @@ export const write_todos = tool(
         todoListt: jsonStringTodos,
       });
 
-      return `<think> ${{
-        message: `✅ TODO list saved file name : ${realFileName}`,
-        tasks: enriched, // return IDs so AI can reference them later
-      }}</think>`;
+      return `<think>${JSON.stringify(
+        {
+          message: `✅ TODO list saved file name : ${realFileName}`,
+          tasks: enriched,
+        },
+        null,
+        2,
+      )}</think>`;
     } catch (error: unknown) {
       if (error instanceof Error) {
         return `❌ Error writing TODO list: ${error.message}`;
