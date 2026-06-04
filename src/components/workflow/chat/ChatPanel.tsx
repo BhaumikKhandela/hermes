@@ -82,7 +82,7 @@ const ChatPanel = ({
     try {
       setLoading(true);
 
-      const res = await fetch("/api/agent/stream", {
+      const res = await fetch("/api/agent/multi-agent", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
