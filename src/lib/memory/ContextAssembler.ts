@@ -55,6 +55,11 @@ export class ContextAssembler {
       `# Recent STM Layer\n${todayLog}`,
     ];
 
+    const agentBuilderContext = [
+      `# Profile Layer\n${userProfile}`,
+      `# Recent STM Layer\n${todayLog}`,
+    ].join("\n\n");
+
     const fixedText = fixedLayers.join("\n\n");
 
     const finalPrompt = `${fixedText}\n\n# New Input \n${userQuery}`;
@@ -84,6 +89,7 @@ export class ContextAssembler {
 
     return {
       prompt: finalPrompt,
+      agentBuilderContext,
       diagnostics: {
         estimateTokens: numberOfTokens,
       },

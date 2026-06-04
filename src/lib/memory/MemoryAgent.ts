@@ -60,6 +60,42 @@ export async function createMemoryAgent({
     return stream;
   }
 
+  async function streamAgentV1(userInput: string, config: any) {
+    await memoryManager.logInteraction("User", userInput, new Date());
+
+    const assembled = await contextAssembler.assemble(userInput, {});
+
+    const agentStream = await agent.stream(
+      { messages: [{ role: "user", content: assembled?.prompt }] },
+      {
+        streamMode: "messages",
+        configurable: {
+          userId,
+          projectId
+        }
+      },
+    );
+
+    let fullContent = "";
+
+    for await (const [messageChunk,metadata] of agentStream) {
+      if (messageChunk.content) {
+        const text = messageChunk.content;
+        fullContent += text;
+
+        config.writer({
+          manager_name: "memoryManager",
+          content: text
+        });
+      }
+    }
+
+    await memoryManager.logInteraction("Assistant-1", fullContent, new Date());
+
+    return { fullContent, context: assembled?.agentBuilderContext}
+
+  }
+
   async function logLastAIMsg(fullAssistantText: string) {
     await memoryManager.logInteraction(
       "Assistant-1",
@@ -70,6 +106,7 @@ export async function createMemoryAgent({
 
   return {
     streamAgent,
+    streamAgentV1,
     logLastAIMsg,
   };
 }

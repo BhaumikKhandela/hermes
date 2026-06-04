@@ -21,7 +21,7 @@ const subagentConfigs = {
   tools: [...filesystemTools],
 };
 
-export async function agentBuilder(userInput: string, config: any) {
+export async function theAgentBuilder(userInput: string, config: any) {
   // For the Main Manager Agent
   const agent = createAgent({
     model: LLM.getInstance("cerebras"),
