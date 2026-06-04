@@ -8,6 +8,7 @@ import type { ChatCerebras } from "@langchain/cerebras";
 import type { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { retrieveRelevantLTMTool } from "./tools/retrieveLTMTool";
 import { toolMonitoringMiddleware } from "./middleware/toolMonitoringMiddleware";
+import { transferTool } from "./tools/transferTool";
 
 export async function createMemoryAgent({
   memoryRoot = path.resolve(process.cwd(), "public", "memory"),
@@ -36,7 +37,7 @@ export async function createMemoryAgent({
 
   const agent = createAgent({
     model,
-    tools: [writeLTMTool, retrieveRelevantLTMTool],
+    tools: [writeLTMTool, retrieveRelevantLTMTool, transferTool],
     systemPrompt: MEMORY_AGENT_SYSTEM_PROMPT,
     middleware: [toolMonitoringMiddleware],
   });
@@ -59,6 +60,42 @@ export async function createMemoryAgent({
     return stream;
   }
 
+  async function streamAgentV1(userInput: string, config: any) {
+    await memoryManager.logInteraction("User", userInput, new Date());
+
+    const assembled = await contextAssembler.assemble(userInput, {});
+
+    const agentStream = await agent.stream(
+      { messages: [{ role: "user", content: assembled?.prompt }] },
+      {
+        streamMode: "messages",
+        configurable: {
+          userId,
+          projectId
+        }
+      },
+    );
+
+    let fullContent = "";
+
+    for await (const [messageChunk,metadata] of agentStream) {
+      if (messageChunk.content) {
+        const text = messageChunk.content;
+        fullContent += text;
+
+        config.writer({
+          manager_name: "memoryManager",
+          content: text
+        });
+      }
+    }
+
+    await memoryManager.logInteraction("Assistant-1", fullContent, new Date());
+
+    return { fullContent, context: assembled?.agentBuilderContext}
+
+  }
+
   async function logLastAIMsg(fullAssistantText: string) {
     await memoryManager.logInteraction(
       "Assistant-1",
@@ -69,6 +106,7 @@ export async function createMemoryAgent({
 
   return {
     streamAgent,
+    streamAgentV1,
     logLastAIMsg,
   };
 }

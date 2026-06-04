@@ -1,11 +1,13 @@
 import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { ChatCerebras } from "@langchain/cerebras";
+import { ChatOpenAI } from "@langchain/openai";
 
-type LLMType = "fireworks" | "cerebras" | "cerebras_llama";
+type LLMType = "fireworks" | "cerebras" | "cerebras_llama" | "gpt4o_mini";;
 type LLMInstanceMap = {
   fireworks: ChatFireworks;
   cerebras: ChatCerebras;
   cerebras_llama: ChatCerebras;
+  gpt4o_mini: ChatOpenAI;
 };
 
 export class LLM {
@@ -49,7 +51,26 @@ export class LLM {
             apiKey: process.env.CEREBRAS_API_KEY,
           }) as LLMInstanceMap[T];
           break;
-        default:
+        case "gpt4o_mini":
+           if (!process.env.BLUESMINDS_API_KEY) {
+            throw new Error("BLUESMINDS_API_KEY is not set");
+          }
+
+          if (!process.env.BLUESMINDS_BASE) {
+            throw new Error("BLUESMINDS_BASE is not set");
+          }
+
+          LLM.instances[type] = new ChatOpenAI({
+            model: "gpt-4o-mini",
+            temperature: 0,
+            apiKey: process.env.BLUESMINDS_API_KEY,
+            configuration: {
+              baseURL: process.env.BLUESMINDS_BASE,
+            },
+          }) as LLMInstanceMap[T];
+
+          break;
+          default:
           throw new Error(`Unsupported LLM type: ${type}`);
       }
     }
@@ -61,3 +82,4 @@ export class LLM {
 export const cerebrasModel = LLM.getInstance("cerebras");
 export const fireworksModel = LLM.getInstance("fireworks");
 export const cerebrasLlamaModel = LLM.getInstance("cerebras_llama");
+export const gpt4oMiniModel = LLM.getInstance("gpt4o_mini");
