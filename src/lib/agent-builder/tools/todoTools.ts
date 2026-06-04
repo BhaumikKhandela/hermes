@@ -57,7 +57,7 @@ export const write_todos = tool(
 
       toolConfig.writer({
         todos: "todos",
-        todoListt: jsonStringTodos,
+        todoList: jsonStringTodos,
       });
 
       return `<think>${JSON.stringify(
