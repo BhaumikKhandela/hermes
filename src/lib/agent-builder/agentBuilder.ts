@@ -39,7 +39,7 @@ export async function theAgentBuilder(userInput: string, config: any) {
     ] as const,
     middleware: [
       summarizationMiddleware({
-        model: LLM.getInstance("cerebras_llama"), // Fast summarization
+        model: LLM.getInstance("gpt4o_mini"), // Fast summarization
         trigger: [
           { tokens: 8000, messages: 15 }, // Only summarize when context is actually heavy
           { tokens: 10000 }, // Absolute ceiling for safety

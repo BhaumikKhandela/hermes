@@ -50,7 +50,7 @@ export async function extractRelevantDocument(query: string, doc: string) {
 }
 
 export async function extractRelevantDocumentV1(query: string, doc: string) {
-  const llm = LLM.getInstance("cerebras_llama");
+  const llm = LLM.getInstance("gpt4o_mini");
   const agent = createAgent({
     model: llm,
     systemPrompt: `You are a high precision relevance filter for a Retrieval-Augmented Generation (RAG) system.
