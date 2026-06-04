@@ -8,6 +8,7 @@ import type { ChatCerebras } from "@langchain/cerebras";
 import type { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { retrieveRelevantLTMTool } from "./tools/retrieveLTMTool";
 import { toolMonitoringMiddleware } from "./middleware/toolMonitoringMiddleware";
+import { transferTool } from "./tools/transferTool";
 
 export async function createMemoryAgent({
   memoryRoot = path.resolve(process.cwd(), "public", "memory"),
@@ -36,7 +37,7 @@ export async function createMemoryAgent({
 
   const agent = createAgent({
     model,
-    tools: [writeLTMTool, retrieveRelevantLTMTool],
+    tools: [writeLTMTool, retrieveRelevantLTMTool, transferTool],
     systemPrompt: MEMORY_AGENT_SYSTEM_PROMPT,
     middleware: [toolMonitoringMiddleware],
   });
