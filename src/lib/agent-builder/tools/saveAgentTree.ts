@@ -60,8 +60,10 @@ export const saveAgentTreeTool = tool(
   {
     name: "save_agent_tree",
     description: `
-        use this tool to save the json agent into
-        the database. you should check this folder working-agent-folder`,
+        Saves the complete JSON agent configuration to the database.
+        Before saving, ensure the agent JSON is ready in the working-agent-folder.
+        The filename should be descriptive (e.g. 'weather-agent.json').
+        This tool validates the JSON structure before saving.`,
     schema: z.object({
       filename: z
         .string()
