@@ -34,16 +34,6 @@ export default function HermesAIBuilder() {
     }
   }, [isPending, session, router]);
 
-  if (isPending) {
-    return <BuilderSkeleton />;
-  }
-
-  if (!session?.user?.id) {
-    return null;
-  }
-
-  const userId = session.user.id;
-
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
@@ -72,6 +62,16 @@ export default function HermesAIBuilder() {
       document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging]);
+
+  if (isPending) {
+    return <BuilderSkeleton />;
+  }
+
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  const userId = session.user.id;
 
   return (
     <div className="flex h-screen bg-white text-slate-900 font-sans overflow-hidden">
