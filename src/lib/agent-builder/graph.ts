@@ -106,11 +106,10 @@ const agentBuilder = async (state: any, config: any) => {
 };
 
 const workflow = new StateGraph(StateAnnotation)
-  .addNode("memoryAgent", memoryAgent)
+  .addNode("memoryAgent", memoryAgent, { ends: [END, "agentBuilder"] })
   .addNode("agentBuilder", agentBuilder)
 
   .addEdge(START, "memoryAgent")
-  .addEdge("memoryAgent", END)
   .addEdge("agentBuilder", END);
 
 export const graph = workflow.compile();
