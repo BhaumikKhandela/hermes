@@ -14,11 +14,12 @@ import { todoListTools } from "./tools/todoTools";
 import { createTaskTool } from "./tools/taskTools";
 import { toolMonitoringMiddleware } from "./middlewares/toolMonitoring";
 import { think_tool } from "./tools/thinkTool";
+import { saveAgentTreeTool } from "./tools/saveAgentTree";
 
 const model = LLM.getInstance("cerebras");
 
 const subagentConfigs = {
-  tools: [...filesystemTools],
+  tools: [...filesystemTools, saveAgentTreeTool],
 };
 
 export async function theAgentBuilder(userInput: string, config: any) {
@@ -35,6 +36,7 @@ export async function theAgentBuilder(userInput: string, config: any) {
       ...filesystemTools,
       ...todoListTools,
       think_tool,
+      saveAgentTreeTool,
       createTaskTool(model, subagentConfigs),
     ] as const,
     middleware: [
