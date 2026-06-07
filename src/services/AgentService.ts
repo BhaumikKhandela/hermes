@@ -15,8 +15,8 @@ export class agentService {
     agentTree?: string;
     projectId: string;
     userId: string;
-    agent_nodes: string;
-    agent_edges: string;
+    agent_nodes: any[];
+    agent_edges: any[];
   }) {
     const { agentTree, projectId, userId, agent_nodes, agent_edges } = props;
 
