@@ -47,6 +47,12 @@ export const saveAgentTreeTool = tool(
         agentTree,
       });
 
+      const io = (globalThis as any).io;
+
+      if (io) {
+        io.emit("agentTree", { agentTree });
+      }
+
       return JSON.stringify({
         message: "agent Tree saved successfully",
       });
