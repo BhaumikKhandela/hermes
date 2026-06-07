@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import UpdateProjectTitle from "./UpdateProjectTitle";
 import ChatPanel from "./chat/ChatPanel";
 import { authClient } from "@/lib/auth/auth-client";
+import { MiddlePanel } from "./panel/MiddlePanel";
 
 export default function HermesAIBuilder() {
   const router = useRouter();
@@ -32,16 +33,6 @@ export default function HermesAIBuilder() {
       router.push("/login");
     }
   }, [isPending, session, router]);
-
-  if (isPending) {
-    return <BuilderSkeleton />;
-  }
-
-  if (!session?.user?.id) {
-    return null;
-  }
-
-  const userId = session.user.id;
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -71,6 +62,16 @@ export default function HermesAIBuilder() {
       document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging]);
+
+  if (isPending) {
+    return <BuilderSkeleton />;
+  }
+
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  const userId = session.user.id;
 
   return (
     <div className="flex h-screen bg-white text-slate-900 font-sans overflow-hidden">
@@ -125,6 +126,8 @@ export default function HermesAIBuilder() {
             <PlayIcon size={18} className="fill-current" />
           </button>
         </header>
+
+        <MiddlePanel />
       </main>
     </div>
   );
