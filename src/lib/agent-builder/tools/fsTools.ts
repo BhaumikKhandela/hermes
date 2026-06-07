@@ -386,9 +386,105 @@ export const glob = tool(
   },
 );
 
+export const delete_file = tool(
+  async ({ filename }, toolConfig: any) => {
+    try {
+      const fullPath = path.resolve(BASE_DIR, filename);
+
+      // Prevent path escaping outside BASE_DIR
+      if (!fullPath.startsWith(BASE_DIR)) {
+        throw new Error("Invalid path: outside workspace");
+      }
+
+      // Prevent deleting files inside the skills folder
+      const skillsPath = path.join(BASE_DIR, "skills");
+
+      if (fullPath.startsWith(skillsPath)) {
+        throw new Error(
+          "Deletion blocked: files inside the 'skills' folder cannot be deleted."
+        );
+      }
+
+      // Check if file exists
+      await fs.promises.access(fullPath);
+
+      // Delete file
+      await fs.promises.unlink(fullPath);
+
+      toolConfig.writer({
+        delete_file: "delete_file",
+        filename,
+      });
+
+      return JSON.stringify({
+        message: `File successfully deleted: ${filename}`,
+      });
+    } catch (error: any) {
+      if (error.code === "ENOENT") {
+        return `File not found: ${filename}`;
+      }
+
+      return `Error deleting file: ${error.message}`;
+    }
+  },
+  {
+    name: "delete_file",
+    description: `
+Delete a file inside the project workspace.
+
+This tool permanently removes a file from the agent workspace directory.
+
+IMPORTANT RESTRICTIONS:
+- Files inside the "skills" directory CANNOT be deleted.
+- Any attempt to delete a file inside "skills/" will be blocked.
+
+PATH USAGE:
+You may provide either:
+
+1. Full relative path
+Example:
+"reports/analysis.md"
+"src/utils/helpers.ts"
+
+2. Filename only
+Example:
+"notes.md"
+"todo.txt"
+
+If only a filename is provided, the file will be assumed to exist in the project root.
+
+FILE BEHAVIOR:
+- The file will be permanently deleted.
+- This action cannot be undone.
+- If the file does not exist, the tool will return a message indicating it was not found.
+
+WHEN TO USE:
+Use this tool when you need to:
+- Remove outdated files
+- Delete temporary outputs
+- Clean up generated artifacts
+- Remove incorrect reports or code
+
+WHEN NOT TO USE:
+- Do not use this tool for directories.
+- Do not attempt to delete files inside the "skills" folder.
+
+BEST PRACTICES:
+- Double check filenames before deletion.
+- Only delete files generated during the current task.
+`,
+    schema: z.object({
+      filename: z.string().describe(
+        "Target file path or filename to delete. Example: 'reports/report.md' or 'notes.md'"
+      ),
+    }),
+  }
+);
+
 export const filesystemTools = [
   write_file,
   read_file,
+  delete_file,
   edit_file,
   ls,
   grep,

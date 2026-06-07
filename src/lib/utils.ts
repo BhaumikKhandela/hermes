@@ -73,3 +73,18 @@ export function getCenteredRandomPosition(
 
   return { x, y };
 }
+
+export function truncateTitle(
+  text: string | null | undefined,
+  maxLength: number
+): string {
+  if (!text) return "";
+
+  const trimmed = text.trim();
+
+  if (trimmed.length <= maxLength) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, maxLength).trimEnd()}...`;
+}

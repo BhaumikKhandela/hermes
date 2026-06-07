@@ -20,22 +20,50 @@ export const getChatHistory = createAsyncThunk<
   }
 });
 
+export type TodoStatus = "in_progress" | "pending" | "completed";
+export type TodoListType = Array<{
+  id: string;
+  task: string;
+  status: TodoStatus;
+}>;
+
 type ChatState = {
   messages: ChatMessage[];
   loading: boolean;
   error: string | null;
+  todos: TodoListType;
 };
 
 const initialState: ChatState = {
   messages: [],
   loading: false,
   error: null,
+  todos: [],
 };
 
 const chatSlice = createSlice({
   name: "chat",
   initialState,
   reducers: {
+    clearTodos(state) {
+      state.todos = [];
+    },
+    addTodos(state, action: PayloadAction<TodoListType>) {
+      state.todos.push(...action.payload);
+    },
+    updateTodos(
+      state,
+      action: PayloadAction<{
+        updates: { id: string; status: TodoStatus }[];
+      }>,
+    ) {
+      action.payload.updates.forEach((update) => {
+        const todo = state.todos.find((t) => t.id === update.id);
+        if (todo) {
+          todo.status = update.status;
+        }
+      });
+    },
     clearChat(state) {
       state.messages = [];
     },
@@ -90,6 +118,9 @@ const chatSlice = createSlice({
 });
 
 export const {
+  updateTodos,
+  clearTodos,
+  addTodos,
   appendToAssistantThinking,
   appendTOLastAiMessage,
   addUserAndAiPlaceholder,

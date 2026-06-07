@@ -30,7 +30,7 @@ export const POST = withErrorHandler(async (req: Request) => {
     const encoder = new TextEncoder();
 
     const sse = (event: string, data: any) => {
-      encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+      return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
     };
 
     await writeToChatHistoryTool.invoke({

@@ -23,8 +23,9 @@ export const POST = withErrorHandler(async (req: Request) => {
     const streamMemoryAgent = await streamAgent(message);
     const encoder = new TextEncoder();
 
-    const sse = (event: string, data: any) =>
-      encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    const sse = (event: string, data: any) => {
+      return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    };
 
     await writeToChatHistoryTool.invoke({
       messages: [{ role: "user", content: message, userId, projectId }],

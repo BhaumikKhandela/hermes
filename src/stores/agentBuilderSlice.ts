@@ -80,7 +80,7 @@ export const agentBuilderSlice = createSlice({
                   id,
                   label: node.config?.label,
                   icon: node.config?.icon,
-                  position,
+                  position: node.config.position ?? position,
                   referenceTo: parentName ? [parentName] : [], // Pass it to commonProps
                 },
                 {
@@ -94,7 +94,7 @@ export const agentBuilderSlice = createSlice({
                 id,
                 label: node.config?.label,
                 icon: node.config?.icon || "",
-                position,
+                position: node.config.position ?? position,
                 data: node.config || {},
                 referenceTo: parentName ? [parentName] : [], // Pass it to commonProps
               });
