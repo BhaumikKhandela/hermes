@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import UpdateProjectTitle from "./UpdateProjectTitle";
 import ChatPanel from "./chat/ChatPanel";
 import { authClient } from "@/lib/auth/auth-client";
+import { MiddlePanel } from "./panel/MiddlePanel";
 
 export default function HermesAIBuilder() {
   const router = useRouter();
@@ -125,6 +126,8 @@ export default function HermesAIBuilder() {
             <PlayIcon size={18} className="fill-current" />
           </button>
         </header>
+
+        <MiddlePanel />
       </main>
     </div>
   );
