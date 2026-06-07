@@ -5,11 +5,16 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/stores";
 import {
+  addTodos,
   addUserAndAiPlaceholder,
   appendToAssistantThinking,
   appendTOLastAiMessage,
+  clearTodos,
   getChatHistory,
+  TodoStatus,
+  updateTodos,
 } from "@/stores/chatSlice";
+import TaskCard from "../TaskCard";
 
 const ChatPanel = ({
   chatWidth,
@@ -27,7 +32,7 @@ const ChatPanel = ({
 
   const dispatch = useDispatch<AppDispatch>();
 
-  const { messages } = useSelector((state: RootState) => state.chat);
+  const { messages, todos } = useSelector((state: RootState) => state.chat);
 
   useEffect(() => {
     dispatch(getChatHistory({ userId, projectId }));
@@ -126,6 +131,33 @@ const ChatPanel = ({
               }
             }
 
+            // todos
+            if (data.todo_list !== undefined && data.todo_list !== null) {
+              try {
+                const jsonPayload = JSON.parse(
+                  data.todo_list.todoList ?? "[]",
+                ) as {
+                  id: string;
+                  task: string;
+                  status: TodoStatus;
+                }[];
+
+                dispatch(clearTodos());
+                dispatch(addTodos(jsonPayload));
+              } catch (error) {
+                console.log("failed to parse todos");
+              }
+            }
+
+            if (data.update_todo !== undefined && data.update_todo !== null) {
+              try {
+                const jsonPayload = data.update_todo;
+                dispatch(updateTodos(jsonPayload));
+              } catch (error) {
+                console.log("failed to parse todos");
+              }
+            }
+
             if (data.thinking !== undefined && data.thinking !== null) {
               for (const char of data.thinking) {
                 thinkingQueueRef.current.push(char);
@@ -189,6 +221,7 @@ const ChatPanel = ({
         ))}
         <div ref={bottomRef} className="mb-10" />
       </div>
+      {todos.length > 0 && <TaskCard todos={todos} />}
 
       <ChatInput
         input={input}
