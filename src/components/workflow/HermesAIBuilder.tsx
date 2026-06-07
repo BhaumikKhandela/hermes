@@ -14,6 +14,9 @@ import UpdateProjectTitle from "./UpdateProjectTitle";
 import ChatPanel from "./chat/ChatPanel";
 import { authClient } from "@/lib/auth/auth-client";
 import { MiddlePanel } from "./panel/MiddlePanel";
+import { useDispatch } from "react-redux";
+import { buildNodes } from "@/stores/agentBuilderSlice";
+import { socket } from "@/socket";
 
 export default function HermesAIBuilder() {
   const router = useRouter();
@@ -28,6 +31,45 @@ export default function HermesAIBuilder() {
 
   const { data: session, isPending } = authClient.useSession();
 
+  const [isConnected, setIsConnected] = useState(false);
+  const [transport, setTransport] = useState("N/A");
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (socket.connected) {
+      onConnect();
+    }
+
+    function onConnect() {
+      setIsConnected(true);
+      setTransport(socket.io.engine.transport.name);
+
+      socket.io.engine.on("upgrade", (transport) => {
+        setTransport(transport.name);
+      });
+
+      function onDisconnect() {
+        setIsConnected(false);
+        setTransport("N/A");
+      }
+
+      socket.on("agentTree", (value) => {
+        dispatch(buildNodes(value?.agentTree))
+
+        console.log("websocket value", value);
+
+      });
+
+      socket.on("connect", onConnect);
+      socket.on("disconnect", onDisconnect);
+
+      return () => {
+        socket.off("connect", onConnect);
+        socket.off("disconnect", onDisconnect);
+      }
+    }
+  },[])
   useEffect(() => {
     if (!isPending && !session?.user?.id) {
       router.push("/login");

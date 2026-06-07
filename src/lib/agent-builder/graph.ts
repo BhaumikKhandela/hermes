@@ -91,7 +91,10 @@ const agentBuilder = async (state: any, config: any) => {
   Message from Assistant-1 on behalf of the user : ${cleanMessage}\n\n
   ${state.agentBuilderContext}`;
 
-  const aiMessage = await theAgentBuilder(`${agentBuilderMessage}`, config);
+  const aiMessage = await theAgentBuilder(`${agentBuilderMessage}`, config, {
+    userId,
+    projectId,
+  });
 
   await memoryManager.logInteraction("Assistant-2", aiMessage, new Date());
 
