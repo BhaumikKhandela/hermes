@@ -14,9 +14,11 @@ import UpdateProjectTitle from "./UpdateProjectTitle";
 import ChatPanel from "./chat/ChatPanel";
 import { authClient } from "@/lib/auth/auth-client";
 import { MiddlePanel } from "./panel/MiddlePanel";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { buildNodes } from "@/stores/agentBuilderSlice";
 import { socket } from "@/socket";
+import { AppDispatch, RootState } from "@/stores";
+import { fetchAgentTree } from "@/stores/agentTreeSlice";
 
 export default function HermesAIBuilder() {
   const router = useRouter();
@@ -34,8 +36,23 @@ export default function HermesAIBuilder() {
   const [isConnected, setIsConnected] = useState(false);
   const [transport, setTransport] = useState("N/A");
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
+  const { agentTree } = useSelector((state: RootState) => state.agentTree);
+
+  useEffect(() => {
+    if (projectId) {
+      dispatch(fetchAgentTree({ projectId }));
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    setTimeout(function () {
+      if (Array.isArray(agentTree)) {
+        dispatch(buildNodes(agentTree));
+      }
+    }, 1000);
+  }, []);
   useEffect(() => {
     if (socket.connected) {
       onConnect();
@@ -55,10 +72,9 @@ export default function HermesAIBuilder() {
       }
 
       socket.on("agentTree", (value) => {
-        dispatch(buildNodes(value?.agentTree))
+        dispatch(buildNodes(value?.agentTree));
 
         console.log("websocket value", value);
-
       });
 
       socket.on("connect", onConnect);
@@ -67,9 +83,9 @@ export default function HermesAIBuilder() {
       return () => {
         socket.off("connect", onConnect);
         socket.off("disconnect", onDisconnect);
-      }
+      };
     }
-  },[])
+  }, []);
   useEffect(() => {
     if (!isPending && !session?.user?.id) {
       router.push("/login");
