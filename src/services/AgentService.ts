@@ -69,13 +69,15 @@ export class agentService {
     return row; // may return null if not found
   }
 
-  async fetchParseExecTree(props: { projectId: string }) {
+  async fetchJsonAgentTree(props: { projectId: string }) {
     const { projectId } = props;
     if (!projectId) {
       throw new Error("projectId is required.");
     }
 
-    const row = await Agent.findOne({ projectId }).select("agentTree -_id");
+    const row = await Agent.findOne({ projectId }).select(
+      "agentTree agent_nodes -_id",
+    );
 
     return row;
   }

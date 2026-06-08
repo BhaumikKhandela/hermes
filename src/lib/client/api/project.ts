@@ -66,6 +66,14 @@ export async function getProjects(
   return data;
 }
 
+export async function getAgentTree(projectId: string): Promise<any> {
+  const data = (await makeHttpReq(
+    "GET",
+    `agent/agent-tree?projectId=${projectId}`,
+  )) as any;
+  return data;
+}
+
 export type ChatMessage = {
   role: "ai" | "user";
   content: string;
