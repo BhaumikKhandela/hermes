@@ -21,5 +21,25 @@ export const GET = withErrorHandler(async (req: Request) => {
   const agent = agentService.getInstance();
   const data = await agent.fetchJsonAgentTree({ projectId });
 
-  return NextResponse.json({ agentTree: data?.agentTree });
+  return NextResponse.json({
+    agentTree: data?.agentTree,
+    nodes: data?.agent_nodes,
+  });
+});
+
+export const POST = withErrorHandler(async (req: Request) => {
+  const { projectId, userId, agentTree, agent_nodes, agent_edges } =
+    await req.json();
+
+  const agent = agentService.getInstance();
+
+  await agent.updateOrCreateAgent({
+    projectId,
+    userId,
+    agentTree,
+    agent_nodes,
+    agent_edges,
+  });
+
+  return NextResponse.json({ message: "Data saved" });
 });

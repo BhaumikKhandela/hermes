@@ -120,13 +120,14 @@ export const agentBuilderSlice = createSlice({
     //   state.nodes = newNodes;
     // },
     buildNodes(state, action: PayloadAction<Array<any>>) {
-      const { nodes, nextId } = buildNodesHelper(
-        action.payload,
-        state.idCount
-      );
+      const { nodes, nextId } = buildNodesHelper(action.payload, state.idCount);
 
       state.nodes = nodes;
       state.idCount = nextId;
+    },
+
+    applyDBNodes(state, action: PayloadAction<Array<any>>) {
+      state.nodes = action.payload;
     },
 
     handleAutoConnect(state) {
@@ -136,7 +137,12 @@ export const agentBuilderSlice = createSlice({
   },
 });
 
-export const { buildNodes, onNodesChange, onEdgesChange, handleAutoConnect } =
-  agentBuilderSlice.actions;
+export const {
+  buildNodes,
+  applyDBNodes,
+  onNodesChange,
+  onEdgesChange,
+  handleAutoConnect,
+} = agentBuilderSlice.actions;
 
 export default agentBuilderSlice.reducer;

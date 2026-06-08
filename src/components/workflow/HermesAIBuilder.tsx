@@ -1,24 +1,17 @@
 "use client";
 
-import {
-  ArrowUpIcon,
-  PaperclipIcon,
-  PlayIcon,
-  PlusIcon,
-  SidebarIcon,
-  Wand2Icon,
-} from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import UpdateProjectTitle from "./UpdateProjectTitle";
 import ChatPanel from "./chat/ChatPanel";
 import { authClient } from "@/lib/auth/auth-client";
 import { MiddlePanel } from "./panel/MiddlePanel";
 import { useDispatch, useSelector } from "react-redux";
-import { buildNodes } from "@/stores/agentBuilderSlice";
+import { applyDBNodes, buildNodes } from "@/stores/agentBuilderSlice";
 import { socket } from "@/socket";
 import { AppDispatch, RootState } from "@/stores";
 import { fetchAgentTree } from "@/stores/agentTreeSlice";
+import CanvasHeader from "./CanvasHeader";
+import { toast } from "sonner";
 
 export default function HermesAIBuilder() {
   const router = useRouter();
@@ -38,54 +31,61 @@ export default function HermesAIBuilder() {
 
   const dispatch = useDispatch<AppDispatch>();
 
-  const { agentTree } = useSelector((state: RootState) => state.agentTree);
+  const { agentTree, nodes: dbnodes } = useSelector(
+    (state: RootState) => state.agentTree,
+  );
 
   useEffect(() => {
-    if (projectId) {
-      dispatch(fetchAgentTree({ projectId }));
-    }
-  }, [projectId]);
+    if (!projectId) return;
+
+    dispatch(fetchAgentTree({ projectId }))
+      .unwrap()
+      .then((data) => {
+        dispatch(buildNodes(data.agentTree));
+        dispatch(applyDBNodes(data.nodes));
+      })
+      .catch((error) => {
+        console.error("Failed to fetch agent tree:", error);
+        toast.error("An error occurred while fetching the workflow");
+      });
+  }, [projectId, dispatch]);
 
   useEffect(() => {
-    setTimeout(function () {
-      if (Array.isArray(agentTree)) {
-        dispatch(buildNodes(agentTree));
-      }
-    }, 1000);
-  }, []);
-  useEffect(() => {
+    const onConnect = () => {
+      setIsConnected(true);
+      setTransport(socket.io.engine.transport.name);
+    };
+
+    const onDisconnect = () => {
+      setIsConnected(false);
+      setTransport("N/A");
+    };
+
+    const onUpgrade = (transport: any) => {
+      setTransport(transport.name);
+    };
+
+    const onAgentTree = (value: any) => {
+      dispatch(buildNodes(value?.agentTree));
+      console.log("websocket value", value);
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("agentTree", onAgentTree);
+    socket.io.engine.on("upgrade", onUpgrade);
+
     if (socket.connected) {
       onConnect();
     }
 
-    function onConnect() {
-      setIsConnected(true);
-      setTransport(socket.io.engine.transport.name);
-
-      socket.io.engine.on("upgrade", (transport) => {
-        setTransport(transport.name);
-      });
-
-      function onDisconnect() {
-        setIsConnected(false);
-        setTransport("N/A");
-      }
-
-      socket.on("agentTree", (value) => {
-        dispatch(buildNodes(value?.agentTree));
-
-        console.log("websocket value", value);
-      });
-
-      socket.on("connect", onConnect);
-      socket.on("disconnect", onDisconnect);
-
-      return () => {
-        socket.off("connect", onConnect);
-        socket.off("disconnect", onDisconnect);
-      };
-    }
-  }, []);
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("agentTree", onAgentTree);
+      socket.io.engine.off("upgrade", onUpgrade);
+    };
+  }, [dispatch]);
   useEffect(() => {
     if (!isPending && !session?.user?.id) {
       router.push("/login");
@@ -138,7 +138,7 @@ export default function HermesAIBuilder() {
         style={{ width: isChatOpen ? `${chatWidth}px` : "0px" }}
         className={`relative flex flex-col h-full shrink-0 overflow-hidden bg-slate-50
         ${isChatOpen ? "border-r border-slate-200" : ""}
-        ${!isDragging ? "transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]" : ""}`}
+        ${!isDragging ? "transition-[width] duration-300 ease-in-out" : ""}`}
       >
         <ChatPanel
           projectId={projectId}
@@ -152,38 +152,21 @@ export default function HermesAIBuilder() {
               e.preventDefault();
               setIsDragging(true);
             }}
-            className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize group z-10"
+            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize group z-10"
           >
-            <div className="w-[2px] mx-auto h-full bg-transparent group-hover:bg-slate-300 transition" />
+            <div className="w-0.5 mx-auto h-full bg-transparent group-hover:bg-slate-300 transition" />
           </div>
         )}
       </aside>
 
       {/* MAIN */}
       <main className="flex-1 flex flex-col min-w-0 h-full">
-        <header className="h-14 border-b border-slate-200 flex items-center justify-between px-4 shrink-0">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsChatOpen(!isChatOpen)}
-              className={`p-1.5 rounded-md transition ${
-                isChatOpen
-                  ? "text-slate-500 hover:bg-slate-100"
-                  : "text-blue-600 bg-blue-100 hover:bg-blue-200"
-              }`}
-            >
-              <SidebarIcon size={18} />
-            </button>
-
-            <UpdateProjectTitle
-              projectId={projectId}
-              initialTitle={"Untitled Project"}
-            />
-          </div>
-
-          <button className="bg-red-500 text-white p-1.5 rounded-md hover:bg-red-600 active:scale-95 transition">
-            <PlayIcon size={18} className="fill-current" />
-          </button>
-        </header>
+        <CanvasHeader
+          isChatOpen={isChatOpen}
+          setIsChatOpen={setIsChatOpen}
+          projectId={projectId}
+          userId={userId}
+        />
 
         <MiddlePanel />
       </main>

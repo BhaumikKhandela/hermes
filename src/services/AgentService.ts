@@ -75,7 +75,9 @@ export class agentService {
       throw new Error("projectId is required.");
     }
 
-    const row = await Agent.findOne({ projectId }).select("agentTree -_id");
+    const row = await Agent.findOne({ projectId }).select(
+      "agentTree agent_nodes -_id",
+    );
 
     return row;
   }

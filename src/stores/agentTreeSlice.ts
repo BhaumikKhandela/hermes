@@ -6,7 +6,7 @@ import {
 } from "@reduxjs/toolkit";
 
 export const fetchAgentTree = createAsyncThunk<
-  { agentTree: any },
+  { agentTree: any; nodes: any },
   { projectId: string },
   { rejectValue: string }
 >("agent/fetchAgentTree", async ({ projectId }: { projectId: string }) =>
@@ -15,6 +15,7 @@ export const fetchAgentTree = createAsyncThunk<
 
 interface agentTreeState {
   agentTree: any;
+  nodes: any;
   loading: boolean;
   error: string | null;
   modal: boolean;
@@ -22,6 +23,7 @@ interface agentTreeState {
 
 const initialState: agentTreeState = {
   agentTree: {},
+  nodes: {},
   loading: false,
   error: null,
   modal: false,
@@ -39,13 +41,11 @@ const agentTreeSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(
-        fetchAgentTree.fulfilled,
-        (state, action: PayloadAction<any>) => {
-          state.agentTree = action.payload?.agentTree;
-          state.loading = false;
-        },
-      )
+      .addCase(fetchAgentTree.fulfilled, (state, action) => {
+        state.agentTree = action.payload?.agentTree;
+        state.nodes = action.payload?.nodes;
+        state.loading = false;
+      })
       .addCase(fetchAgentTree.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to fetch";
