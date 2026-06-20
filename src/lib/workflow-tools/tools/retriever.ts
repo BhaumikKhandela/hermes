@@ -5,27 +5,22 @@ import { CohereEmbeddings } from "@langchain/cohere";
 import { ToolFactory } from "../types";
 
 export const createRetrieverTool: ToolFactory = (config) => {
-  const pineconeApiKey =
-    config?.pineconeApiKey || process.env.PINECONE_API_KEY || "";
-  const cohereApiKey =
-    config?.cohereApiKey || process.env.COHERE_API_KEY || "";
-  const indexName = config?.indexName || process.env.PINECONE_INDEX || "";
-
-  if (!pineconeApiKey || !cohereApiKey || !indexName) {
-    throw new Error(
-      "Retriever requires PINECONE_API_KEY, COHERE_API_KEY, and PINECONE_INDEX env vars",
-    );
-  }
-
-  const pinecone = new Pinecone({ apiKey: pineconeApiKey });
-  const index = pinecone.index(indexName);
-  const embeddings = new CohereEmbeddings({
-    apiKey: cohereApiKey,
-    model: "embed-english-v3.0",
-  });
+  const pineconeApiKey = config?.pineconeApiKey || "";
+  const cohereApiKey = config?.cohereApiKey || "";
+  const indexName = config?.indexName || "";
 
   return tool(
     async ({ query, namespace, topK }) => {
+      if (!pineconeApiKey || !cohereApiKey || !indexName) {
+        return "Retriever tool is not configured. Double-click the node and provide Pinecone and Cohere API keys.";
+      }
+
+      const pinecone = new Pinecone({ apiKey: pineconeApiKey });
+      const index = pinecone.index(indexName);
+      const embeddings = new CohereEmbeddings({
+        apiKey: cohereApiKey,
+        model: "embed-english-v3.0",
+      });
       const vector = await embeddings.embedQuery(query);
       const result = await index.namespace(namespace || "").query({
         vector,

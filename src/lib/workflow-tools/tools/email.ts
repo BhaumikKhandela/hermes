@@ -3,38 +3,30 @@ import { z } from "zod";
 import nodemailer from "nodemailer";
 import { ToolFactory } from "../types";
 
-let transporter: nodemailer.Transporter | null = null;
-
-function getTransporter(config?: Record<string, any>) {
-  if (transporter) return transporter;
-
-  const host = config?.smtpHost || process.env.SMTP_HOST || "";
-  const port = parseInt(config?.smtpPort || process.env.SMTP_PORT || "587", 10);
-  const user = config?.smtpUser || process.env.SMTP_USER || "";
-  const pass = config?.smtpPass || process.env.SMTP_PASS || "";
-  const fromName = config?.fromName || process.env.SMTP_FROM_NAME || "Workflow";
+function createTransporter(config?: Record<string, any>) {
+  const host = config?.smtpHost || "";
+  const port = parseInt(config?.smtpPort || "587", 10);
+  const user = config?.smtpUser || "";
+  const pass = config?.smtpPass || "";
 
   if (!host || !user || !pass) {
     throw new Error(
-      "Email requires SMTP_HOST, SMTP_USER, and SMTP_PASS env vars",
+      "Email tool is not configured. Double-click the node and provide SMTP host, user, and password.",
     );
   }
 
-  transporter = nodemailer.createTransport({
+  return nodemailer.createTransport({
     host,
     port,
     secure: port === 465,
     auth: { user, pass },
-    from: `"${fromName}" <${user}>`,
   });
-
-  return transporter;
 }
 
 export const createEmailTool: ToolFactory = (config) => {
   return tool(
     async ({ to, subject, body }) => {
-      const t = getTransporter(config);
+      const t = createTransporter(config);
       const info = await t.sendMail({
         to,
         subject,

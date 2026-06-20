@@ -358,15 +358,11 @@ export const createMySQLTool: ToolFactory = (config) => {
 };
 
 export const createMongoDBTool: ToolFactory = (config) => {
-  const uri =
-    config?.uri ||
-    config?.connectionString ||
-    process.env.MONGODB_URI ||
-    "";
+  const uri = config?.uri || config?.connectionString || "";
 
   if (!uri) {
     throw new Error(
-      "MongoDB requires a connection URI. Set it in the node config or MONGODB_URI env var.",
+      "MongoDB requires a connection URI. Double-click the node and provide your MongoDB URI.",
     );
   }
 

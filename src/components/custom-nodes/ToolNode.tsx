@@ -16,7 +16,7 @@ export function ToolNode({
     <div
       className={`
         relative group flex items-center gap-3 px-4 py-2.5
-        rounded-xl border transition-all duration-300
+        rounded-xl border transition-all duration-300 cursor-pointer
         ${
           isDark
             ? "bg-slate-900/80 border-slate-700/50 backdrop-blur-md hover:border-blue-500/50"

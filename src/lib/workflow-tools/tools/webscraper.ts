@@ -4,16 +4,15 @@ import Firecrawl from "@mendable/firecrawl";
 import { ToolFactory } from "../types";
 
 export const createWebscraperTool: ToolFactory = (config) => {
-  const apiKey = config?.apiKey || process.env.FIRECRAWL_API_KEY || "";
-
-  if (!apiKey) {
-    throw new Error("Firecrawl requires FIRECRAWL_API_KEY env var");
-  }
-
-  const app = new Firecrawl({ apiKey });
+  const apiKey = config?.apiKey || "";
 
   return tool(
     async ({ url, crawl }) => {
+      if (!apiKey) {
+        return "Webscraper tool is not configured. Double-click the node and provide a Firecrawl API Key.";
+      }
+
+      const app = new Firecrawl({ apiKey });
       if (crawl) {
         const result = await app.crawl(url, {
           limit: 10,

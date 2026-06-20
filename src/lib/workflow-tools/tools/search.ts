@@ -3,17 +3,15 @@ import { z } from "zod";
 import { ToolFactory } from "../types";
 
 export const createSearchTool: ToolFactory = (config) => {
-  const apiKey = config?.apiKey || process.env.GOOGLE_API_KEY || "";
-  const cseId = config?.cseId || process.env.GOOGLE_CSE_ID || "";
-
-  if (!apiKey || !cseId) {
-    throw new Error(
-      "Google Custom Search requires GOOGLE_API_KEY and GOOGLE_CSE_ID env vars",
-    );
-  }
+  const apiKey = config?.apiKey || "";
+  const cseId = config?.cseId || "";
 
   return tool(
     async ({ query, num }) => {
+      if (!apiKey || !cseId) {
+        return "Search tool is not configured. Double-click the node and provide API Key and Search Engine ID.";
+      }
+
       const url = new URL("https://www.googleapis.com/customsearch/v1");
       url.searchParams.set("key", apiKey);
       url.searchParams.set("cx", cseId);

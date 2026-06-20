@@ -4,19 +4,19 @@ import { CohereEmbeddings } from "@langchain/cohere";
 import { ToolFactory } from "../types";
 
 export const createEmbeddingTool: ToolFactory = (config) => {
-  const apiKey = config?.apiKey || process.env.COHERE_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("Cohere embeddings require COHERE_API_KEY env var");
-  }
-
-  const embeddings = new CohereEmbeddings({
-    apiKey,
-    model: config?.model || "embed-english-v3.0",
-  });
+  const apiKey = config?.apiKey || "";
 
   return tool(
     async ({ text }) => {
+      if (!apiKey) {
+        return "Embedding tool is not configured. Double-click the node and provide a Cohere API Key.";
+      }
+
+      const embeddings = new CohereEmbeddings({
+        apiKey,
+        model: config?.model || "embed-english-v3.0",
+      });
+
       const vector = await embeddings.embedQuery(text);
       return JSON.stringify(vector);
     },

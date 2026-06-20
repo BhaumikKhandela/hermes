@@ -5,24 +5,22 @@ import { HumanMessage } from "@langchain/core/messages";
 import { ToolFactory } from "../types";
 
 export const createImageReaderTool: ToolFactory = (config) => {
-  const apiKey = config?.apiKey || process.env.BLUESMINDS_API_KEY || "";
-  const baseURL = config?.baseURL || process.env.BLUESMINDS_BASE || "";
-
-  if (!apiKey || !baseURL) {
-    throw new Error(
-      "Image reader requires BLUESMINDS_API_KEY and BLUESMINDS_BASE env vars",
-    );
-  }
-
-  const model = new ChatOpenAI({
-    model: config?.model || "gpt-4o-mini",
-    apiKey,
-    configuration: { baseURL },
-    maxTokens: 1024,
-  });
-
   return tool(
     async ({ imageUrl, question }) => {
+      const apiKey = config?.apiKey || "";
+      const baseURL = config?.baseURL || "";
+
+      if (!apiKey || !baseURL) {
+        return "Image Reader tool is not configured. Double-click the node and provide API Key and Base URL.";
+      }
+
+      const model = new ChatOpenAI({
+        model: config?.model || "gpt-4o-mini",
+        apiKey,
+        configuration: { baseURL },
+        maxTokens: 1024,
+      });
+
       const msg = new HumanMessage({
         content: [
           {

@@ -20,8 +20,10 @@ import {
   handleAutoConnect,
   onEdgesChange,
   onNodesChange,
+  setSelectedNode,
 } from "@/stores/agentBuilderSlice";
 import { nodeTypes } from "@/components/custom-nodes/nodesTypes";
+import { ToolConfigSheet } from "./ToolConfigSheet";
 
 export const MiddlePanel = ({
   userId,
@@ -51,6 +53,13 @@ export const MiddlePanel = ({
     [dispatch],
   );
 
+  const handleNodeDoubleClick = useCallback(
+    (_event: any, node: any) => {
+      dispatch(setSelectedNode(node.id));
+    },
+    [dispatch],
+  );
+
   useEffect(() => {
     if (nodes.length === 0) return;
 
@@ -67,20 +76,22 @@ export const MiddlePanel = ({
         <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {activeTab === "Visual Editor" ? (
-          <div
-            className="flex-1 relative p-2"
-            style={{
-              backgroundImage: "radial-gradient(#e5e7eb 1px, transparent 1px)",
-              backgroundSize: "20px 20px",
-            }}
-          >
-            <div className="w-full h-full rounded-lg overflow-hidden bg-white border border-slate-200">
+          <>
+            <div
+              className="flex-1 relative p-2"
+              style={{
+                backgroundImage: "radial-gradient(#e5e7eb 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
+              }}
+            >
+              <div className="w-full h-full rounded-lg overflow-hidden bg-white border border-slate-200">
               <ReactFlow
                 nodes={nodes}
                 edges={edges}
                 nodeTypes={nodeTypes}
                 onNodesChange={handleNodesChange}
                 onEdgesChange={handleEdgesChange}
+                onNodeDoubleClick={handleNodeDoubleClick}
                 fitView
                 proOptions={{ hideAttribution: true }}
               >
@@ -96,6 +107,8 @@ export const MiddlePanel = ({
               </ReactFlow>
             </div>
           </div>
+          <ToolConfigSheet />
+          </>
         ) : (
           <ExecutePanel projectId={projectId} userId={userId} />
         )}

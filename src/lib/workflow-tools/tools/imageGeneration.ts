@@ -4,16 +4,15 @@ import OpenAI from "openai";
 import { ToolFactory } from "../types";
 
 export const createImageGeneratorTool: ToolFactory = (config) => {
-  const apiKey = config?.apiKey || process.env.OPENAI_API_KEY || "";
-
-  if (!apiKey) {
-    throw new Error("Image generation requires OPENAI_API_KEY env var");
-  }
-
-  const openai = new OpenAI({ apiKey });
+  const apiKey = config?.apiKey || "";
 
   return tool(
     async ({ prompt, size }) => {
+      if (!apiKey) {
+        return "Image Generator tool is not configured. Double-click the node and provide an OpenAI API Key.";
+      }
+
+      const openai = new OpenAI({ apiKey });
       const res = await openai.images.generate({
         model: "dall-e-3",
         prompt,

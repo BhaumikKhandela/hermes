@@ -15,12 +15,14 @@ interface CanvasSliceState {
   nodes: Array<any>;
   edges: Array<any>;
   idCount: number;
+  selectedNodeId: string | null;
 }
 
 const initialState: CanvasSliceState = {
   nodes: [],
   edges: [],
   idCount: 1,
+  selectedNodeId: null,
 };
 
 export const agentBuilderSlice = createSlice({
@@ -134,6 +136,20 @@ export const agentBuilderSlice = createSlice({
       const generatedEdges = autoConnect(state.nodes);
       state.edges = generatedEdges;
     },
+
+    setSelectedNode(state, action: PayloadAction<string | null>) {
+      state.selectedNodeId = action.payload;
+    },
+
+    updateNodeConfig(
+      state,
+      action: PayloadAction<{ id: string; config: Record<string, any> }>,
+    ) {
+      const node = state.nodes.find((n) => n.id === action.payload.id);
+      if (node) {
+        node.data = { ...node.data, config: { ...node.data.config, ...action.payload.config } };
+      }
+    },
   },
 });
 
@@ -143,6 +159,8 @@ export const {
   onNodesChange,
   onEdgesChange,
   handleAutoConnect,
+  setSelectedNode,
+  updateNodeConfig,
 } = agentBuilderSlice.actions;
 
 export default agentBuilderSlice.reducer;

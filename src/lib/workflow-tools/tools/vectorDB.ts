@@ -4,20 +4,17 @@ import { Pinecone } from "@pinecone-database/pinecone";
 import { ToolFactory } from "../types";
 
 export const createVectorDBTool: ToolFactory = (config) => {
-  const apiKey = config?.apiKey || process.env.PINECONE_API_KEY || "";
-  const indexName = config?.indexName || process.env.PINECONE_INDEX || "";
-
-  if (!apiKey || !indexName) {
-    throw new Error(
-      "Vector DB requires PINECONE_API_KEY and PINECONE_INDEX env vars",
-    );
-  }
-
-  const pinecone = new Pinecone({ apiKey });
-  const index = pinecone.index(indexName);
+  const apiKey = config?.apiKey || "";
+  const indexName = config?.indexName || "";
 
   return tool(
     async ({ action, vector, id, namespace, topK }) => {
+      if (!apiKey || !indexName) {
+        return "Vector DB tool is not configured. Double-click the node and provide API Key and Index Name.";
+      }
+
+      const pinecone = new Pinecone({ apiKey });
+      const index = pinecone.index(indexName);
       const ns = namespace || "";
 
       switch (action) {

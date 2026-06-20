@@ -1,20 +1,15 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { google, calendar_v3 } from "googleapis";
+import { google } from "googleapis";
 import { ToolFactory } from "../types";
 
-let calendarClient: calendar_v3.Calendar | null = null;
-
-function getCalendarClient(config?: Record<string, any>) {
-  if (calendarClient) return calendarClient;
-
-  const email = config?.clientEmail || process.env.GOOGLE_CLIENT_EMAIL || "";
-  const privateKey =
-    config?.privateKey || process.env.GOOGLE_PRIVATE_KEY || "";
+function createCalendarClient(config?: Record<string, any>) {
+  const email = config?.clientEmail || "";
+  const privateKey = config?.privateKey || "";
 
   if (!email || !privateKey) {
     throw new Error(
-      "Calendar requires GOOGLE_CLIENT_EMAIL and GOOGLE_PRIVATE_KEY env vars",
+      "Calendar tool is not configured. Double-click the node and provide Service Account credentials.",
     );
   }
 
@@ -23,14 +18,13 @@ function getCalendarClient(config?: Record<string, any>) {
     key: privateKey,
     scopes: ["https://www.googleapis.com/auth/calendar.events"],
   });
-  calendarClient = google.calendar({ version: "v3", auth });
-  return calendarClient;
+  return google.calendar({ version: "v3", auth });
 }
 
 export const createCalendarTool: ToolFactory = (config) => {
   return tool(
     async ({ summary, description, startTime, endTime, timeZone }) => {
-      const client = getCalendarClient(config);
+      const client = createCalendarClient(config);
       const res = await client.events.insert({
         calendarId: "primary",
         requestBody: {

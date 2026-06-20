@@ -4,16 +4,15 @@ import OpenAI from "openai";
 import { ToolFactory } from "../types";
 
 export const createImageEditorTool: ToolFactory = (config) => {
-  const apiKey = config?.apiKey || process.env.OPENAI_API_KEY || "";
-
-  if (!apiKey) {
-    throw new Error("Image editing requires OPENAI_API_KEY env var");
-  }
-
-  const openai = new OpenAI({ apiKey });
+  const apiKey = config?.apiKey || "";
 
   return tool(
     async ({ imageUrl, maskUrl, prompt }) => {
+      if (!apiKey) {
+        return "Image Editor tool is not configured. Double-click the node and provide an OpenAI API Key.";
+      }
+
+      const openai = new OpenAI({ apiKey });
       const imageRes = await fetch(imageUrl);
       const imageBlob = await imageRes.blob();
       const imageFile = new File([imageBlob], "image.png", {
