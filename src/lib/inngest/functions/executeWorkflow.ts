@@ -3,9 +3,9 @@ import { inngest } from "../client";
 export const executeWorkflow = inngest.createFunction(
   {
     id: "execute-workflow",
+    triggers: [{ event: "workflow/execute.requested" }],
     retries: 3,
   },
-  { event: "workflow/execute.requested" },
   async ({ event, step }) => {
     const { projectId, userId, runId } = event.data;
 

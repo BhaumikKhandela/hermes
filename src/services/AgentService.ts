@@ -30,7 +30,7 @@ export class agentService {
     userId: string;
     agent_nodes: any[];
     agent_edges: any[];
-    agentInstruction: any;
+    agentInstruction?: any;
   }) {
     const {
       agentTree,

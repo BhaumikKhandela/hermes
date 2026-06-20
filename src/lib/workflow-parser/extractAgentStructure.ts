@@ -1,17 +1,14 @@
 export function extractAgentStructure(agentTree: any) {
-  // Find root input
-  const inputNode = agentTree.find((n) => n.node_name === "inputNode");
+  const inputNode = agentTree.find((n: any) => n.node_name === "inputNode");
   if (!inputNode) {
     throw new Error("No inputNode found");
   }
 
-  // Find the first agent child
-  const agentNode = inputNode.children.find((n) => n.node_name === "agent");
+  const agentNode = inputNode.children.find((n: any) => n.node_name === "agent");
   if (!agentNode) {
     throw new Error("No agent found under inputNode");
   }
 
-  // Extract agent config
   const agent = {
     instructions:
       agentNode?.config?.instructions || agentNode?.config?.systemPrompt,
@@ -21,8 +18,8 @@ export function extractAgentStructure(agentTree: any) {
   };
 
   const agentTools = agentNode.children
-    .filter((n) => n.node_name === "tool" || n.node_name === "modelNode")
-    .map((tool) => {
+    .filter((n: any) => n.node_name === "tool" || n.node_name === "modelNode")
+    .map((tool: any) => {
       const base = {
         label: tool.config.label,
         nodeRegistry: tool.config.nodeRegistry,
@@ -38,14 +35,12 @@ export function extractAgentStructure(agentTree: any) {
       };
     });
 
-  // extract SubAgents (children with node_name=subAgent)
   const subAgents: any[] = [];
   const subAgentTools: Record<string, any> = {};
 
   agentNode.children
-    .filter((n) => n.node_name === "subAgent")
-    .forEach((sub, index) => {
-      // store subAgent
+    .filter((n: any) => n.node_name === "subAgent")
+    .forEach((sub: any, index: number) => {
       subAgents.push({
         label: sub.config.label || "",
         instructions: sub.config.instructions || "",
@@ -55,8 +50,8 @@ export function extractAgentStructure(agentTree: any) {
       });
 
       subAgentTools[index] = sub.children
-        .filter((c) => c.node_name === "tool" || c.node_name === "modelNode")
-        .map((tool) => {
+        .filter((c: any) => c.node_name === "tool" || c.node_name === "modelNode")
+        .map((tool: any) => {
           const base = {
             label: tool.config.label,
             nodeRegistry: tool.config.nodeRegistry,
