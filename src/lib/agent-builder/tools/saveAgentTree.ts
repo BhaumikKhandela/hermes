@@ -5,6 +5,7 @@ import fs from "fs";
 import { autoConnect } from "@/helper/autoConnect";
 import { buildNodesHelper } from "@/helper/buildNodeHelper";
 import { agentService } from "@/services/AgentService";
+import { extractAgentStructure } from "@/lib/workflow-parser/extractAgentStructure";
 
 const ROOT = process.cwd();
 const TREE_DIR = path.join(
@@ -39,12 +40,15 @@ export const saveAgentTreeTool = tool(
 
       const agent_edges = autoConnect(nodes);
 
+      const agentInstruction = extractAgentStructure(agentTree);
+
       await agent.updateOrCreateAgent({
         projectId,
         userId,
         agent_edges,
         agent_nodes: nodes,
         agentTree,
+        agentInstruction,
       });
 
       const io = (globalThis as any).io;

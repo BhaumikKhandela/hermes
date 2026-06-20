@@ -16,6 +16,7 @@ const agentSchema = new mongoose.Schema(
     agent_edges: { type: [Schema.Types.Mixed], required: true },
     fileUpload: { type: Boolean, required: false, default: false },
     agentTree: { type: Schema.Types.Mixed, default: null, required: false },
+    agentInstruction: { type: [Schema.Types.Mixed], required: true },
   },
   { timestamps: true },
 );

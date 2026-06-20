@@ -168,7 +168,7 @@ export default function HermesAIBuilder() {
           userId={userId}
         />
 
-        <MiddlePanel />
+        <MiddlePanel projectId={projectId} userId={userId} />
       </main>
     </div>
   );

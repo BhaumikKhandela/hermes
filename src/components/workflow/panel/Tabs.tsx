@@ -6,7 +6,7 @@ interface TabsProps {
 }
 
 export const Tabs = ({ activeTab, setActiveTab }: TabsProps) => {
-  const tabs = ["Visual Editor", "Execution"];
+  const tabs = ["Visual Editor", "Execute"];
 
   return (
     <div className="flex items-center px-4 border-b border-slate-200 h-11 shrink-0 bg-white">

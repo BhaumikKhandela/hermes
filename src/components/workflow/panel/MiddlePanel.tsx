@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import RightPanel from "./RightPanel";
 import { Tabs } from "./Tabs";
-import { ExecutionChat } from "./ExecutionChat";
+import ExecutePanel from "./execute/ExecutePanel";
 import {
   Background,
   BackgroundVariant,
@@ -23,7 +23,13 @@ import {
 } from "@/stores/agentBuilderSlice";
 import { nodeTypes } from "@/components/custom-nodes/nodesTypes";
 
-export const MiddlePanel = () => {
+export const MiddlePanel = ({
+  userId,
+  projectId,
+}: {
+  userId: string;
+  projectId: string;
+}) => {
   const [activeTab, setActiveTab] = useState("Visual Editor");
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
 
@@ -91,7 +97,7 @@ export const MiddlePanel = () => {
             </div>
           </div>
         ) : (
-          <ExecutionChat />
+          <ExecutePanel projectId={projectId} userId={userId} />
         )}
 
         <button
