@@ -10,12 +10,16 @@ export function register(reg: ToolRegistration): void {
 export function build(
   nodeRegistry: string,
   config?: Record<string, any>,
+  options?: { credentialPayload?: Record<string, any> },
 ): DynamicStructuredTool {
   const reg = registry.get(nodeRegistry);
   if (!reg) {
     throw new Error(`No tool registered for nodeRegistry: "${nodeRegistry}"`);
   }
-  return reg.factory(config);
+  const mergedConfig = options?.credentialPayload
+    ? { ...config, ...options.credentialPayload }
+    : config;
+  return reg.factory(mergedConfig);
 }
 
 export function list(): ToolRegistration[] {

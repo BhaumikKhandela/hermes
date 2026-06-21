@@ -39,6 +39,11 @@ export type AuthMethod = {
   fields: string[];
 };
 
+export type CredentialRequirement = {
+  providers: string[];
+  authMethods: string[];
+};
+
 export type ToolRegistration = {
   nodeRegistry: string;
   factory: ToolFactory;
@@ -48,4 +53,5 @@ export type ToolRegistration = {
   icon?: string;
   configFields?: ToolConfigField[];
   authMethods?: AuthMethod[];
+  credentialRequirement?: CredentialRequirement;
 };

@@ -150,6 +150,16 @@ export const agentBuilderSlice = createSlice({
         node.data = { ...node.data, config: { ...node.data.config, ...action.payload.config } };
       }
     },
+
+    updateNodeCredential(
+      state,
+      action: PayloadAction<{ id: string; credentialId: string | null }>,
+    ) {
+      const node = state.nodes.find((n) => n.id === action.payload.id);
+      if (node) {
+        node.data = { ...node.data, credentialId: action.payload.credentialId };
+      }
+    },
   },
 });
 
@@ -161,6 +171,7 @@ export const {
   handleAutoConnect,
   setSelectedNode,
   updateNodeConfig,
+  updateNodeCredential,
 } = agentBuilderSlice.actions;
 
 export default agentBuilderSlice.reducer;

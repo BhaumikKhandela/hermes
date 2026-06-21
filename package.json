@@ -10,6 +10,7 @@
     "inngest": "inngest-cli dev -u http://localhost:8000/api/inngest"
   },
   "dependencies": {
+    "@aws-sdk/client-kms": "^3.1073.0",
     "@base-ui/react": "^1.3.0",
     "@langchain/cerebras": "^1.0.4",
     "@langchain/cohere": "^1.0.4",
