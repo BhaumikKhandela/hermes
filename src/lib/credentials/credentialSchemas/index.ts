@@ -61,6 +61,15 @@ const credentialSchemas: CredentialSchema[] = [
     ],
   },
   {
+    provider: "google",
+    authMethod: "apiKey",
+    fields: [
+      { key: "apiKey", label: "API Key", type: "password", placeholder: "AIza...", required: true },
+      { key: "cseId", label: "Search Engine ID", type: "text", placeholder: "your_cse_id", required: true },
+    ],
+    testAction: "search test query",
+  },
+  {
     provider: "google-sheets",
     authMethod: "serviceAccount",
     fields: [

@@ -20,27 +20,20 @@ register({
   nodeRegistry: "model", factory: createModelTool, category: "ai", label: "Model", description: "Call an LLM for reasoning and generation", icon: "brain",
   credentialRequirement: { providers: ["openai", "anthropic", "gemini"], authMethods: ["apiKey"] },
   configFields: [
-    { key: "apiKey", label: "API Key", type: "password", placeholder: "sk-...", required: true },
-    { key: "baseURL", label: "Base URL", type: "url", placeholder: "https://api.openai.com/v1", required: false },
     { key: "modelName", label: "Model", type: "text", placeholder: "gpt-4o", required: false },
   ],
 });
 
 register({
   nodeRegistry: "search", factory: createSearchTool, category: "data", label: "Search", description: "Google Custom Search web search", icon: "search",
-  credentialRequirement: { providers: ["google-sheets"], authMethods: ["apiKey"] },
-  configFields: [
-    { key: "googleApiKey", label: "Google API Key", type: "password", placeholder: "AIza...", required: true },
-    { key: "cseId", label: "CSE ID", type: "text", placeholder: "your_cse_id", required: true },
-  ],
+  credentialRequirement: { providers: ["google"], authMethods: ["apiKey"] },
+  configFields: [],
 });
 
 register({
   nodeRegistry: "webscraper", factory: createWebscraperTool, category: "data", label: "Web Scraper", description: "Scrape web pages with Firecrawl", icon: "globe",
   credentialRequirement: { providers: ["firecrawl"], authMethods: ["apiKey"] },
-  configFields: [
-    { key: "apiKey", label: "Firecrawl API Key", type: "password", placeholder: "fc-...", required: true },
-  ],
+  configFields: [],
 });
 
 register({
@@ -52,8 +45,6 @@ register({
   nodeRegistry: "embedding", factory: createEmbeddingTool, category: "ai", label: "Embedding", description: "Convert text to vector embeddings", icon: "vector",
   credentialRequirement: { providers: ["openai"], authMethods: ["apiKey"] },
   configFields: [
-    { key: "apiKey", label: "API Key", type: "password", placeholder: "sk-...", required: true },
-    { key: "baseURL", label: "Base URL", type: "url", placeholder: "https://api.openai.com/v1", required: false },
     { key: "modelName", label: "Model", type: "text", placeholder: "text-embedding-3-small", required: false },
   ],
 });
@@ -61,10 +52,7 @@ register({
 register({
   nodeRegistry: "vectorDB", factory: createVectorDBTool, category: "storage", label: "Vector DB", description: "Query and upsert Pinecone vectors", icon: "layers",
   credentialRequirement: { providers: ["pinecone"], authMethods: ["apiKey"] },
-  configFields: [
-    { key: "apiKey", label: "Pinecone API Key", type: "password", placeholder: "pcsk_...", required: true },
-    { key: "indexName", label: "Index Name", type: "text", placeholder: "my-index", required: true },
-  ],
+  configFields: [],
 });
 
 register({
@@ -75,26 +63,19 @@ register({
 register({
   nodeRegistry: "imageGenerator", factory: createImageGeneratorTool, category: "ai", label: "Image Generator", description: "Generate images with DALL-E 3", icon: "image",
   credentialRequirement: { providers: ["openai"], authMethods: ["apiKey"] },
-  configFields: [
-    { key: "apiKey", label: "OpenAI API Key", type: "password", placeholder: "sk-...", required: true },
-  ],
+  configFields: [],
 });
 
 register({
   nodeRegistry: "imageReader", factory: createImageReaderTool, category: "ai", label: "Image Reader", description: "Analyze images with GPT-4o vision", icon: "eye",
   credentialRequirement: { providers: ["bluesmind"], authMethods: ["apiKey"] },
-  configFields: [
-    { key: "apiKey", label: "API Key", type: "password", placeholder: "sk-...", required: true },
-    { key: "baseURL", label: "Base URL", type: "url", placeholder: "https://api.openai.com/v1", required: true },
-  ],
+  configFields: [],
 });
 
 register({
   nodeRegistry: "imageEditor", factory: createImageEditorTool, category: "ai", label: "Image Editor", description: "Edit images with DALL-E 2 inpainting", icon: "edit",
   credentialRequirement: { providers: ["openai"], authMethods: ["apiKey"] },
-  configFields: [
-    { key: "apiKey", label: "OpenAI API Key", type: "password", placeholder: "sk-...", required: true },
-  ],
+  configFields: [],
 });
 
 register({
@@ -154,26 +135,20 @@ register({
 register({
   nodeRegistry: "postgresDB", factory: createPostgresTool, category: "storage", label: "PostgreSQL", description: "Query a PostgreSQL database with your credentials", icon: "database",
   credentialRequirement: { providers: ["postgres"], authMethods: ["userPassword"] },
-  configFields: [
-    { key: "table", label: "Default Table", type: "text", placeholder: "users", required: false },
-  ],
+  configFields: [],
 });
 
 register({
   nodeRegistry: "mysqlDB", factory: createMySQLTool, category: "storage", label: "MySQL", description: "Query a MySQL database with your credentials", icon: "database",
   credentialRequirement: { providers: ["mysql"], authMethods: ["userPassword"] },
-  configFields: [
-    { key: "table", label: "Default Table", type: "text", placeholder: "users", required: false },
-  ],
+  configFields: [],
 });
 
 register({
   nodeRegistry: "mongoDB", factory: createMongoDBTool, category: "storage", label: "MongoDB", description: "Query a MongoDB database with your connection URI", icon: "database",
   credentialRequirement: { providers: ["mongodb"], authMethods: ["connectionString"] },
-  configFields: [
-    { key: "collection", label: "Default Collection", type: "text", placeholder: "users", required: false },
-  ],
+  configFields: [],
 });
 
 export { register, build, list, getRegistration } from "./registry";
-export type { ToolFactory, ToolRegistration, ToolCategory } from "./types";
+export type { ToolFactory, ToolRegistration, ToolCategory, CredentialRequirement } from "./types";

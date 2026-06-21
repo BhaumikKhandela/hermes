@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/stores";
-import { setSelectedNode, updateNodeCredential } from "@/stores/agentBuilderSlice";
+import { setSelectedNode, updateNodeCredential, updateNodeConfig } from "@/stores/agentBuilderSlice";
 import { getRegistration } from "@/lib/workflow-tools/registry";
 import {
   Sheet,
@@ -88,8 +88,9 @@ export function ToolConfigSheet() {
   const handleSave = useCallback(() => {
     if (!selectedNode) return;
     dispatch(updateNodeCredential({ id: selectedNode.id, credentialId: selectedId }));
+    dispatch(updateNodeConfig({ id: selectedNode.id, config }));
     dispatch(setSelectedNode(null));
-  }, [selectedNode, selectedId, dispatch]);
+  }, [selectedNode, selectedId, config, dispatch]);
 
   const handleCredentialCreated = useCallback((credentialId: string) => {
     setShowCreateForm(false);

@@ -2,6 +2,7 @@ export const CredentialProviders = [
   "openai",
   "anthropic",
   "gemini",
+  "google",
   "google-sheets",
   "google-calendar",
   "pinecone",

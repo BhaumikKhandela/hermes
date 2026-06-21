@@ -25,6 +25,7 @@ export function extractAgentStructure(agentTree: any) {
         nodeRegistry: tool.config.nodeRegistry,
         name: tool.config.name,
         config: tool.config.config,
+        credentialId: tool.config.credentialId || null,
       };
 
       return {
@@ -57,6 +58,7 @@ export function extractAgentStructure(agentTree: any) {
             nodeRegistry: tool.config.nodeRegistry,
             name: tool.config.name,
             config: tool.config.config,
+            credentialId: tool.config.credentialId || null,
           };
 
           return {
