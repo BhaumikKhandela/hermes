@@ -1,22 +1,33 @@
+"use client";
+
 import { Handle, Position } from "@xyflow/react";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, TriangleAlert } from "lucide-react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
+import { getRegistration } from "@/lib/workflow-tools/registry";
 
-export function ToolNode({
-  data,
-}: {
-  data: { icon: string; label: string };
-}) {
+type ToolNodeData = {
+  icon: string;
+  label: string;
+  nodeRegistry?: string;
+  credentialId?: string | null;
+};
+
+export function ToolNode({ data }: { data: ToolNodeData }) {
   const { theme, resolvedTheme } = useTheme();
   const activeTheme = theme === "system" ? resolvedTheme : theme;
   const isDark = activeTheme === "dark";
+
+  const reg = data.nodeRegistry ? getRegistration(data.nodeRegistry) : null;
+  const needsCredential = reg?.credentialRequirement !== undefined;
+  const missingCredential = needsCredential && !data.credentialId;
 
   return (
     <div
       className={`
         relative group flex items-center gap-3 px-4 py-2.5
         rounded-xl border transition-all duration-300 cursor-pointer
+        ${missingCredential ? "border-amber-400/60" : ""}
         ${
           isDark
             ? "bg-slate-900/80 border-slate-700/50 backdrop-blur-md hover:border-blue-500/50"
@@ -50,13 +61,18 @@ export function ToolNode({
         >
           Tool
         </span>
-        <span
-          className={`text-sm font-semibold leading-tight ${
-            isDark ? "text-slate-100" : "text-slate-800"
-          }`}
-        >
-          {data.label}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span
+            className={`text-sm font-semibold leading-tight ${
+              isDark ? "text-slate-100" : "text-slate-800"
+            }`}
+          >
+            {data.label}
+          </span>
+          {missingCredential && (
+            <TriangleAlert size={13} className="text-amber-500 shrink-0" />
+          )}
+        </div>
       </div>
 
       {/* Zapier-Style SQUARE Handle */}
