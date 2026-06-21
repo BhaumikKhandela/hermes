@@ -10,17 +10,20 @@ import { vectordbNodeConfig } from "@/lib/node-configs/vectorDbNode";
 import { getCenteredRandomPosition } from "@/lib/utils";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { addEdge, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
+import { createNodeFromRegistry } from "@/lib/workflow-tools/createNode";
 
 interface CanvasSliceState {
   nodes: Array<any>;
   edges: Array<any>;
   idCount: number;
+  selectedNodeId: string | null;
 }
 
 const initialState: CanvasSliceState = {
   nodes: [],
   edges: [],
   idCount: 1,
+  selectedNodeId: null,
 };
 
 export const agentBuilderSlice = createSlice({
@@ -134,6 +137,44 @@ export const agentBuilderSlice = createSlice({
       const generatedEdges = autoConnect(state.nodes);
       state.edges = generatedEdges;
     },
+
+    setSelectedNode(state, action: PayloadAction<string | null>) {
+      state.selectedNodeId = action.payload;
+    },
+
+    updateNodeConfig(
+      state,
+      action: PayloadAction<{ id: string; config: Record<string, any> }>,
+    ) {
+      const node = state.nodes.find((n) => n.id === action.payload.id);
+      if (node) {
+        node.data = { ...node.data, config: { ...node.data.config, ...action.payload.config } };
+      }
+    },
+
+    updateNodeCredential(
+      state,
+      action: PayloadAction<{ id: string; credentialId: string | null }>,
+    ) {
+      const node = state.nodes.find((n) => n.id === action.payload.id);
+      if (node) {
+        node.data = { ...node.data, credentialId: action.payload.credentialId };
+      }
+    },
+
+    addNodeFromPalette(
+      state,
+      action: PayloadAction<{ nodeRegistry: string; position?: { x: number; y: number } }>,
+    ) {
+      const id = `n${state.idCount++}`;
+      const position = action.payload.position || getCenteredRandomPosition(80);
+      const node = createNodeFromRegistry({
+        nodeRegistry: action.payload.nodeRegistry,
+        id,
+        position,
+      });
+      state.nodes.push(node);
+    },
   },
 });
 
@@ -143,6 +184,10 @@ export const {
   onNodesChange,
   onEdgesChange,
   handleAutoConnect,
+  setSelectedNode,
+  updateNodeConfig,
+  updateNodeCredential,
+  addNodeFromPalette,
 } = agentBuilderSlice.actions;
 
 export default agentBuilderSlice.reducer;

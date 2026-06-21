@@ -2,13 +2,14 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import RightPanel from "./RightPanel";
 import { Tabs } from "./Tabs";
-import { ExecutionChat } from "./ExecutionChat";
+import ExecutePanel from "./execute/ExecutePanel";
 import {
   Background,
   BackgroundVariant,
   Controls,
   MiniMap,
   ReactFlow,
+  useReactFlow,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
@@ -17,17 +18,27 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/stores";
 
 import {
+  addNodeFromPalette,
   handleAutoConnect,
   onEdgesChange,
   onNodesChange,
+  setSelectedNode,
 } from "@/stores/agentBuilderSlice";
 import { nodeTypes } from "@/components/custom-nodes/nodesTypes";
+import { ToolConfigSheet } from "./ToolConfigSheet";
 
-export const MiddlePanel = () => {
+export const MiddlePanel = ({
+  userId,
+  projectId,
+}: {
+  userId: string;
+  projectId: string;
+}) => {
   const [activeTab, setActiveTab] = useState("Visual Editor");
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
 
   const dispatch = useDispatch<AppDispatch>();
+  const reactFlowInstance = useReactFlow();
 
   const { nodes, edges } = useSelector((state: RootState) => state.builder);
 
@@ -43,6 +54,32 @@ export const MiddlePanel = () => {
       dispatch(onEdgesChange(changes));
     },
     [dispatch],
+  );
+
+  const handleNodeDoubleClick = useCallback(
+    (_event: any, node: any) => {
+      dispatch(setSelectedNode(node.id));
+    },
+    [dispatch],
+  );
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      const nodeRegistry = event.dataTransfer.getData("application/node-registry");
+      if (!nodeRegistry) return;
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      dispatch(addNodeFromPalette({ nodeRegistry, position }));
+    },
+    [dispatch, reactFlowInstance],
   );
 
   useEffect(() => {
@@ -61,20 +98,24 @@ export const MiddlePanel = () => {
         <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {activeTab === "Visual Editor" ? (
-          <div
-            className="flex-1 relative p-2"
-            style={{
-              backgroundImage: "radial-gradient(#e5e7eb 1px, transparent 1px)",
-              backgroundSize: "20px 20px",
-            }}
-          >
-            <div className="w-full h-full rounded-lg overflow-hidden bg-white border border-slate-200">
+          <>
+            <div
+              className="flex-1 relative p-2"
+              style={{
+                backgroundImage: "radial-gradient(#e5e7eb 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
+              }}
+            >
+              <div className="w-full h-full rounded-lg overflow-hidden bg-white border border-slate-200">
               <ReactFlow
                 nodes={nodes}
                 edges={edges}
                 nodeTypes={nodeTypes}
                 onNodesChange={handleNodesChange}
                 onEdgesChange={handleEdgesChange}
+                onNodeDoubleClick={handleNodeDoubleClick}
+                onDrop={onDrop}
+                onDragOver={onDragOver}
                 fitView
                 proOptions={{ hideAttribution: true }}
               >
@@ -90,8 +131,10 @@ export const MiddlePanel = () => {
               </ReactFlow>
             </div>
           </div>
+          <ToolConfigSheet />
+          </>
         ) : (
-          <ExecutionChat />
+          <ExecutePanel projectId={projectId} userId={userId} />
         )}
 
         <button

@@ -31,7 +31,7 @@ export function ModelNode({
   }, [data?.label]);
 
   return (
-    <div className="flex flex-col items-center select-none transition-colors duration-300">
+    <div className="flex flex-col items-center select-none transition-colors duration-300 cursor-pointer">
       {/* Zapier-Style Plus Handle at Top */}
       <Handle
         type="target"

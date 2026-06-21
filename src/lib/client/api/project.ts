@@ -81,7 +81,6 @@ export type ChatMessage = {
   userId: string;
   projectId: string;
 };
-
 export type ChatHistoryReturnType = { messages: ChatMessage[] };
 export interface IFetchChatHistoryType {
   userId: string;

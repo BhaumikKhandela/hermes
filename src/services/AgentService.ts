@@ -11,14 +11,35 @@ export class agentService {
     return agentService.instance;
   }
 
+  async fetchAgentInstructions(projectId: string, userId: string) {
+    if (!projectId || !userId) {
+      throw new Error("projectId and userId are required");
+    }
+
+    const row = await Agent.findOne({
+      projectId,
+      userId,
+    }).populate("agentInstruction");
+
+    return row; // may return null if not found
+  }
+
   async updateOrCreateAgent(props: {
     agentTree?: string;
     projectId: string;
     userId: string;
     agent_nodes: any[];
     agent_edges: any[];
+    agentInstruction?: any;
   }) {
-    const { agentTree, projectId, userId, agent_nodes, agent_edges } = props;
+    const {
+      agentTree,
+      projectId,
+      userId,
+      agent_nodes,
+      agent_edges,
+      agentInstruction,
+    } = props;
 
     if (!projectId || !userId) {
       throw new Error("projectId and userId are required.");
@@ -39,6 +60,7 @@ export class agentService {
       agent_edges,
       agent_nodes,
       agentTree,
+      agentInstruction,
     };
 
     const update = { $set: updateFields };
