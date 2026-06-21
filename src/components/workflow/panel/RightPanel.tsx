@@ -79,8 +79,15 @@ function ToolCard({
 }) {
   const IconComponent = ICON_MAP[reg.icon || ""];
 
+  const onDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData("application/node-registry", reg.nodeRegistry);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
   return (
     <button
+      draggable
+      onDragStart={onDragStart}
       onClick={onClick}
       className="w-full flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50 hover:border-slate-300 transition text-left"
     >
@@ -171,6 +178,11 @@ const RightPanel = ({
         {/* Structural Nodes */}
         <div className="flex gap-2 mb-4">
           <button
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData("application/node-registry", "agent");
+              e.dataTransfer.effectAllowed = "move";
+            }}
             onClick={() => handleAddNode("agent")}
             className="flex-1 flex items-center justify-center gap-2 border border-slate-200 rounded-xl p-3 hover:bg-slate-50 transition text-sm font-medium text-slate-700"
           >
@@ -178,6 +190,11 @@ const RightPanel = ({
             Agent
           </button>
           <button
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData("application/node-registry", "subAgent");
+              e.dataTransfer.effectAllowed = "move";
+            }}
             onClick={() => handleAddNode("subAgent")}
             className="flex-1 flex items-center justify-center gap-2 border border-slate-200 rounded-xl p-3 hover:bg-slate-50 transition text-sm font-medium text-slate-700"
           >

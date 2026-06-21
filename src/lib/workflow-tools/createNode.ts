@@ -1,5 +1,7 @@
 import { toolNodeConfig } from "@/lib/node-configs/toolNode";
 import { modelNodeConfig } from "@/lib/node-configs/modelNode";
+import { agentNodeConfig } from "@/lib/node-configs/agentNode";
+import { subAgentNodeConfig } from "@/lib/node-configs/subAgentNode";
 import { getRegistration } from "./registry";
 
 type CreateNodeInput = {
@@ -13,6 +15,14 @@ export function createNodeFromRegistry({
   id,
   position,
 }: CreateNodeInput) {
+  if (nodeRegistry === "agent") {
+    return agentNodeConfig({ id, label: "AI Agent", icon: "", position });
+  }
+
+  if (nodeRegistry === "subAgent") {
+    return subAgentNodeConfig({ id, label: "Sub Agent", icon: "", position });
+  }
+
   const reg = getRegistration(nodeRegistry);
   if (!reg) {
     throw new Error(`No registration found for nodeRegistry: "${nodeRegistry}"`);

@@ -9,6 +9,7 @@ import {
   Controls,
   MiniMap,
   ReactFlow,
+  useReactFlow,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
@@ -17,6 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/stores";
 
 import {
+  addNodeFromPalette,
   handleAutoConnect,
   onEdgesChange,
   onNodesChange,
@@ -36,6 +38,7 @@ export const MiddlePanel = ({
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
 
   const dispatch = useDispatch<AppDispatch>();
+  const reactFlowInstance = useReactFlow();
 
   const { nodes, edges } = useSelector((state: RootState) => state.builder);
 
@@ -58,6 +61,25 @@ export const MiddlePanel = ({
       dispatch(setSelectedNode(node.id));
     },
     [dispatch],
+  );
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      const nodeRegistry = event.dataTransfer.getData("application/node-registry");
+      if (!nodeRegistry) return;
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      dispatch(addNodeFromPalette({ nodeRegistry, position }));
+    },
+    [dispatch, reactFlowInstance],
   );
 
   useEffect(() => {
@@ -92,6 +114,8 @@ export const MiddlePanel = ({
                 onNodesChange={handleNodesChange}
                 onEdgesChange={handleEdgesChange}
                 onNodeDoubleClick={handleNodeDoubleClick}
+                onDrop={onDrop}
+                onDragOver={onDragOver}
                 fitView
                 proOptions={{ hideAttribution: true }}
               >
