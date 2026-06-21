@@ -87,7 +87,9 @@ export async function decryptById(
   const plaintextKey = await kmsDecrypt(doc.encryptedDEK);
   const plaintext = aesDecrypt(doc.ciphertext, plaintextKey, doc.iv, doc.authTag);
 
-  return JSON.parse(plaintext);
+  const payload = JSON.parse(plaintext);
+  payload.provider = doc.provider;
+  return payload;
 }
 
 type DecryptManyInput = {

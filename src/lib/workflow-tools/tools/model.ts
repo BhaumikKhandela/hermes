@@ -1,15 +1,21 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { LLM } from "@/lib/llm/LLM";
-import { ToolFactory } from "../types";
+import { createLLMClient } from "./createLLMClient";
+import type { ToolFactory } from "../types";
 
 export const createModelTool: ToolFactory = (config) => {
-  const provider = config?.provider || "cerebras";
+  const provider = config?.provider || "openai";
+  const apiKey = config?.apiKey || "";
+  const modelName = config?.modelName || "";
 
   return tool(
     async ({ prompt, system }) => {
-      const llm = LLM.getInstance(provider as any);
+      if (!apiKey) {
+        return "Model tool is not configured. Double-click the node and add an API key credential.";
+      }
+
+      const llm = createLLMClient({ provider, modelName, apiKey });
       const messages = system
         ? [new SystemMessage(system), new HumanMessage(prompt)]
         : [new HumanMessage(prompt)];

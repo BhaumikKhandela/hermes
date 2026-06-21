@@ -21,7 +21,7 @@ register({
   featured: true,
   credentialRequirement: { providers: ["openai", "anthropic", "gemini"], authMethods: ["apiKey"] },
   configFields: [
-    { key: "modelName", label: "Model", type: "text", placeholder: "gpt-4o", required: false },
+    { key: "modelName", label: "Model Name", type: "text", placeholder: "gpt-4o, claude-3-5-sonnet, gemini-1.5-pro", required: false },
   ],
 });
 
