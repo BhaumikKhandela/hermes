@@ -8,6 +8,7 @@ export { OpenAIProvider } from "./openai-provider";
 export { AnthropicProvider } from "./anthropic-provider";
 export { GeminiProvider } from "./gemini-provider";
 export { getCachedModels, setCachedModels } from "./cache";
+export { createLLMClient } from "@/lib/workflow-tools/tools/createLLMClient";
 
 import { registerProvider } from "./provider-registry";
 import { OpenAIProvider } from "./openai-provider";

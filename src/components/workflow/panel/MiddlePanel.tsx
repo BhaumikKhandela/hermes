@@ -134,7 +134,7 @@ export const MiddlePanel = ({
           <ToolConfigSheet />
           </>
         ) : (
-          <ExecutePanel projectId={projectId} userId={userId} />
+          <ExecutePanel projectId={projectId} />
         )}
 
         <button
