@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ToolConfigForm } from "./ToolConfigForm";
 import { CredentialForm } from "./CredentialForm";
+import { ModelNodeConfig } from "./ModelNodeConfig";
 import {
   Combobox,
   ComboboxInput,
@@ -103,6 +104,8 @@ export function ToolConfigSheet() {
 
   const selectedCred = credentials.find((c) => c._id === selectedId);
 
+  const isModelNode = selectedNode.data?.nodeRegistry === "model";
+
   return (
     <Sheet open onOpenChange={(open) => !open && handleClose()}>
       <SheetContent side="right" className="w-80 sm:max-w-sm">
@@ -113,91 +116,105 @@ export function ToolConfigSheet() {
         <Separator />
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-          {credReq ? (
+          {isModelNode ? (
+            <ModelNodeConfig
+              nodeId={selectedNode.id}
+              nodeRegistry={reg.nodeRegistry}
+              credentialId={existingCredentialId}
+              config={existingConfig}
+              credentials={credentials}
+              loading={loading}
+              onClose={handleClose}
+            />
+          ) : (
             <>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Credential</label>
-                <Combobox value={selectedId || ""} onValueChange={handleSelect}>
-                  <ComboboxInput placeholder="Search credentials..." className="w-full" />
-                  <ComboboxContent>
-                    <ComboboxList>
-                      {loading && <div className="p-2 text-sm text-muted-foreground">Loading...</div>}
-                      <ComboboxEmpty>No credentials found</ComboboxEmpty>
-                      {credentials.map((c) => (
-                        <ComboboxItem key={c._id} value={c._id}>
-                          <div className="flex flex-col">
-                            <span>{c.name}</span>
-                            {c.providerAccountId && (
-                              <span className="text-xs text-muted-foreground">{c.providerAccountId}</span>
-                            )}
-                          </div>
-                          <Badge
-                            variant={c.status === "active" ? "default" : "destructive"}
-                            className="ml-auto text-[10px]"
-                          >
-                            {c.status}
-                          </Badge>
-                        </ComboboxItem>
-                      ))}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
+              {credReq ? (
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">Credential</label>
+                    <Combobox value={selectedId || ""} onValueChange={handleSelect}>
+                      <ComboboxInput placeholder="Search credentials..." className="w-full" />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          {loading && <div className="p-2 text-sm text-muted-foreground">Loading...</div>}
+                          <ComboboxEmpty>No credentials found</ComboboxEmpty>
+                          {credentials.map((c) => (
+                            <ComboboxItem key={c._id} value={c._id}>
+                              <div className="flex flex-col">
+                                <span>{c.name}</span>
+                                {c.providerAccountId && (
+                                  <span className="text-xs text-muted-foreground">{c.providerAccountId}</span>
+                                )}
+                              </div>
+                              <Badge
+                                variant={c.status === "active" ? "default" : "destructive"}
+                                className="ml-auto text-[10px]"
+                              >
+                                {c.status}
+                              </Badge>
+                            </ComboboxItem>
+                          ))}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
 
-                {selectedCred && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                    <Badge variant="outline" className="text-[10px]">{selectedCred.provider}</Badge>
-                    <span>{selectedCred.authMethod}</span>
-                    {selectedCred.lastUsedAt && (
-                      <span>Last used: {new Date(selectedCred.lastUsedAt).toLocaleDateString()}</span>
+                    {selectedCred && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                        <Badge variant="outline" className="text-[10px]">{selectedCred.provider}</Badge>
+                        <span>{selectedCred.authMethod}</span>
+                        {selectedCred.lastUsedAt && (
+                          <span>Last used: {new Date(selectedCred.lastUsedAt).toLocaleDateString()}</span>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
-              </div>
 
-              {!showCreateForm ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => setShowCreateForm(true)}
-                >
-                  Add New Credential
-                </Button>
-              ) : credReq ? (
-                <CredentialForm
-                  schema={getCredentialSchema(
-                    credReq.providers[0] as any,
-                    credReq.authMethods[0] as any,
-                  )!}
-                  onCreated={handleCredentialCreated}
-                  onCancel={() => setShowCreateForm(false)}
-                />
+                  {!showCreateForm ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setShowCreateForm(true)}
+                    >
+                      Add New Credential
+                    </Button>
+                  ) : credReq ? (
+                    <CredentialForm
+                      schema={getCredentialSchema(
+                        credReq.providers[0] as any,
+                        credReq.authMethods[0] as any,
+                      )!}
+                      onCreated={handleCredentialCreated}
+                      onCancel={() => setShowCreateForm(false)}
+                    />
+                  ) : null}
+                </>
               ) : null}
-            </>
-          ) : null}
 
-          {reg.configFields && reg.configFields.length > 0 && (
-            <>
-              <Separator />
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Node Configuration</label>
-                <ToolConfigForm
-                  fields={reg.configFields}
-                  values={config}
-                  onChange={(key, value) => setConfig((prev) => ({ ...prev, [key]: value }))}
-                />
+              {reg.configFields && reg.configFields.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">Node Configuration</label>
+                    <ToolConfigForm
+                      fields={reg.configFields}
+                      values={config}
+                      onChange={(key, value) => setConfig((prev) => ({ ...prev, [key]: value }))}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="flex gap-2 p-4 pt-0">
+                <Button onClick={handleSave} className="flex-1">
+                  Save
+                </Button>
+                <Button variant="outline" onClick={handleClose}>
+                  Cancel
+                </Button>
               </div>
             </>
           )}
-        </div>
-
-        <div className="flex gap-2 p-4 pt-0">
-          <Button onClick={handleSave} className="flex-1">
-            Save
-          </Button>
-          <Button variant="outline" onClick={handleClose}>
-            Cancel
-          </Button>
         </div>
       </SheetContent>
     </Sheet>

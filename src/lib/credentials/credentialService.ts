@@ -89,6 +89,7 @@ export async function decryptById(
 
   const payload = JSON.parse(plaintext);
   payload.provider = doc.provider;
+  payload.revision = doc.revision;
   return payload;
 }
 
