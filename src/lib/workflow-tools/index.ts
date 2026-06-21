@@ -18,6 +18,7 @@ import { createPostgresTool, createMySQLTool, createMongoDBTool } from "./tools/
 
 register({
   nodeRegistry: "model", factory: createModelTool, category: "ai", label: "Model", description: "Call an LLM for reasoning and generation", icon: "brain",
+  featured: true,
   credentialRequirement: { providers: ["openai", "anthropic", "gemini"], authMethods: ["apiKey"] },
   configFields: [
     { key: "modelName", label: "Model", type: "text", placeholder: "gpt-4o", required: false },
@@ -26,6 +27,7 @@ register({
 
 register({
   nodeRegistry: "search", factory: createSearchTool, category: "data", label: "Search", description: "Google Custom Search web search", icon: "search",
+  featured: true,
   credentialRequirement: { providers: ["google"], authMethods: ["apiKey"] },
   configFields: [],
 });
@@ -38,6 +40,7 @@ register({
 
 register({
   nodeRegistry: "memory", factory: createMemoryTool, category: "storage", label: "Memory", description: "Persistent key-value memory store", icon: "database",
+  featured: true,
   configFields: [],
 });
 
@@ -106,6 +109,7 @@ register({
 
 register({
   nodeRegistry: "sendMail", factory: createEmailTool, category: "communication", label: "Send Mail", description: "Send emails via SMTP", icon: "mail",
+  featured: true,
   credentialRequirement: { providers: ["smtp"], authMethods: ["smtp"] },
   configFields: [
     { key: "to", label: "Default Recipient", type: "text", placeholder: "user@example.com", required: false },
@@ -134,6 +138,7 @@ register({
 
 register({
   nodeRegistry: "postgresDB", factory: createPostgresTool, category: "storage", label: "PostgreSQL", description: "Query a PostgreSQL database with your credentials", icon: "database",
+  featured: true,
   credentialRequirement: { providers: ["postgres"], authMethods: ["userPassword"] },
   configFields: [],
 });

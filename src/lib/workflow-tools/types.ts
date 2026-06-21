@@ -54,4 +54,7 @@ export type ToolRegistration = {
   configFields?: ToolConfigField[];
   authMethods?: AuthMethod[];
   credentialRequirement?: CredentialRequirement;
+  featured?: boolean;
+  beta?: boolean;
+  hidden?: boolean;
 };

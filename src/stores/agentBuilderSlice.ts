@@ -10,6 +10,7 @@ import { vectordbNodeConfig } from "@/lib/node-configs/vectorDbNode";
 import { getCenteredRandomPosition } from "@/lib/utils";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { addEdge, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
+import { createNodeFromRegistry } from "@/lib/workflow-tools/createNode";
 
 interface CanvasSliceState {
   nodes: Array<any>;
@@ -160,6 +161,20 @@ export const agentBuilderSlice = createSlice({
         node.data = { ...node.data, credentialId: action.payload.credentialId };
       }
     },
+
+    addNodeFromPalette(
+      state,
+      action: PayloadAction<{ nodeRegistry: string; position?: { x: number; y: number } }>,
+    ) {
+      const id = `n${state.idCount++}`;
+      const position = action.payload.position || getCenteredRandomPosition(80);
+      const node = createNodeFromRegistry({
+        nodeRegistry: action.payload.nodeRegistry,
+        id,
+        position,
+      });
+      state.nodes.push(node);
+    },
   },
 });
 
@@ -172,6 +187,7 @@ export const {
   setSelectedNode,
   updateNodeConfig,
   updateNodeCredential,
+  addNodeFromPalette,
 } = agentBuilderSlice.actions;
 
 export default agentBuilderSlice.reducer;
