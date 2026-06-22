@@ -64,11 +64,12 @@ const components: Components = {
     }
 
     return (
-      <pre className="bg-black text-white p-3 rounded-lg overflow-x-auto mb-4">
-        <code {...props} className={className}>
-          {children}
-        </code>
-      </pre>
+      <code
+        {...props}
+        className={`${className || ""} bg-black text-white p-3 rounded-lg overflow-x-auto mb-4 block`}
+      >
+        {children}
+      </code>
     );
   },
 
