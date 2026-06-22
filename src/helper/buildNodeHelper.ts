@@ -87,6 +87,7 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
     }
   };
 
+  if (!nodesInput) return { nodes: [], nextId: idCount };
   nodesInput.forEach((rootNode: any) => traverse(rootNode));
 
   return {

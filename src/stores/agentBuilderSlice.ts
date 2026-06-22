@@ -122,15 +122,15 @@ export const agentBuilderSlice = createSlice({
 
     //   state.nodes = newNodes;
     // },
-    buildNodes(state, action: PayloadAction<Array<any>>) {
-      const { nodes, nextId } = buildNodesHelper(action.payload, state.idCount);
+    buildNodes(state, action: PayloadAction<Array<any> | undefined | null>) {
+      const { nodes, nextId } = buildNodesHelper(action.payload ?? [], state.idCount);
 
       state.nodes = nodes;
       state.idCount = nextId;
     },
 
-    applyDBNodes(state, action: PayloadAction<Array<any>>) {
-      state.nodes = action.payload;
+    applyDBNodes(state, action: PayloadAction<Array<any> | undefined | null>) {
+      state.nodes = action.payload ?? [];
     },
 
     handleAutoConnect(state) {
