@@ -10,6 +10,7 @@ import { createRetriesExhaustedMiddleware } from "./retriesExhaustedMiddleware";
 import { createRetryObservabilityMiddleware } from "./retryObservabilityMiddleware";
 import { createToolLifecycleMiddleware } from "./toolLifecycleMiddleware";
 import { DEFAULT_MAX_RETRIES } from "./constants";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { ExecutionPlan, ToolNodeDef } from "./types";
 
 type RunAgentInput = {
@@ -18,6 +19,7 @@ type RunAgentInput = {
   userId: string;
   credentialCache: Map<string, Record<string, any>>;
   runId: string;
+  modelOverride?: BaseChatModel;
 };
 
 async function resolveToolFromDef(
@@ -52,6 +54,7 @@ async function compileSubAgentTool(
   userId: string,
   credentialCache: Map<string, Record<string, any>>,
   runId: string,
+  modelOverride?: BaseChatModel,
 ): Promise<DynamicStructuredTool> {
   const name = sanitizeToolName(subPlan.agent.label);
 
@@ -66,7 +69,7 @@ async function compileSubAgentTool(
         request: z.string().describe(`Task to delegate to ${subPlan.agent.label}`),
       }),
       func: async ({ request }) =>
-        runAgent({ plan: subPlan, input: request, userId, credentialCache, runId }),
+        runAgent({ plan: subPlan, input: request, userId, credentialCache, runId, modelOverride }),
     });
   }
 
@@ -102,6 +105,7 @@ async function compileSubAgentTool(
         userId,
         credentialCache,
         runId,
+        modelOverride,
       }),
   });
 }
@@ -112,23 +116,30 @@ async function runWithModel(
   userId: string,
   credentialCache: Map<string, Record<string, any>>,
   runId: string,
+  modelOverride?: BaseChatModel,
 ): Promise<string> {
-  const credentialId = plan.model!.credentialId;
-  if (!credentialCache.has(credentialId)) {
-    const payload = await decryptById({
-      credentialId,
-      actorId: userId,
-    });
-    credentialCache.set(credentialId, payload);
-  }
-  const modelPayload = credentialCache.get(credentialId)!;
+  let llm: BaseChatModel;
 
-  const llm = await createLLMClient({
-    provider: modelPayload.provider,
-    modelName: plan.model!.modelName,
-    apiKey: modelPayload.apiKey,
-    baseURL: modelPayload.baseURL,
-  });
+  if (modelOverride) {
+    llm = modelOverride;
+  } else {
+    const credentialId = plan.model!.credentialId;
+    if (!credentialCache.has(credentialId)) {
+      const payload = await decryptById({
+        credentialId,
+        actorId: userId,
+      });
+      credentialCache.set(credentialId, payload);
+    }
+    const modelPayload = credentialCache.get(credentialId)!;
+
+    llm = await createLLMClient({
+      provider: modelPayload.provider,
+      modelName: plan.model!.modelName,
+      apiKey: modelPayload.apiKey,
+      baseURL: modelPayload.baseURL,
+    });
+  }
 
   const [tools, subAgentTools] = await Promise.all([
     Promise.all(
@@ -136,7 +147,7 @@ async function runWithModel(
     ),
     Promise.all(
       plan.subAgents.map((sub) =>
-        compileSubAgentTool(sub, userId, credentialCache, runId),
+        compileSubAgentTool(sub, userId, credentialCache, runId, modelOverride),
       ),
     ),
   ]);
@@ -197,6 +208,7 @@ export async function runAgent({
   userId,
   credentialCache,
   runId,
+  modelOverride,
 }: RunAgentInput): Promise<string> {
   const eventBase = {
     runId,
@@ -215,7 +227,7 @@ export async function runAgent({
     let result: string;
 
     if (plan.model) {
-      result = await runWithModel(plan, input, userId, credentialCache, runId);
+      result = await runWithModel(plan, input, userId, credentialCache, runId, modelOverride);
     } else if (plan.subAgents.length === 1) {
       result = await runAgent({
         plan: plan.subAgents[0],
