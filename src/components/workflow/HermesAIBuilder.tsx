@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ChatPanel from "./chat/ChatPanel";
+import { ReactFlowProvider } from "@xyflow/react";
 import { authClient } from "@/lib/auth/auth-client";
 import { MiddlePanel } from "./panel/MiddlePanel";
 import { useDispatch, useSelector } from "react-redux";
@@ -168,7 +169,9 @@ export default function HermesAIBuilder() {
           userId={userId}
         />
 
-        <MiddlePanel projectId={projectId} userId={userId} />
+        <ReactFlowProvider>
+          <MiddlePanel projectId={projectId} userId={userId} />
+        </ReactFlowProvider>
       </main>
     </div>
   );
