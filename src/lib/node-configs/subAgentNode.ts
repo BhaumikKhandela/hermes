@@ -14,6 +14,7 @@ export function subAgentNodeConfig(props: nodeConfigProps) {
       icon: "",
       sub: "worker Agent",
       instructions: "",
+      description: "",
       model: "",
     },
 

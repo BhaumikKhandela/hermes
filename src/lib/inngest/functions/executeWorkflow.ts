@@ -1,13 +1,44 @@
+import { NonRetriableError } from "inngest";
 import { inngest } from "../client";
 import { agentService } from "@/services/AgentService";
 import { WorkflowRun } from "@/models/WorkflowRunSchema";
 import { buildExecutionPlan } from "@/lib/workflow-execution/buildExecutionPlan";
 import { validateExecutionPlan } from "@/lib/workflow-execution/validateExecutionPlan";
-import { build } from "@/lib/workflow-tools/registry";
-import { decryptById, markCredentialsUsed } from "@/lib/credentials/credentialService";
-import { createLLMClient } from "@/lib/providers";
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { HumanMessage } from "@langchain/core/messages";
+import { runAgent } from "@/lib/workflow-execution/runAgent";
+import { markCredentialsUsed } from "@/lib/credentials/credentialService";
+import type { ExecutionPlan } from "@/lib/workflow-execution/types";
+
+function countAgents(plan: ExecutionPlan): number {
+  let count = 1;
+  for (const sub of plan.subAgents) {
+    count += countAgents(sub);
+  }
+  return count;
+}
+
+function countTools(plan: ExecutionPlan): number {
+  let count = plan.tools.length;
+  for (const sub of plan.subAgents) {
+    count += countTools(sub);
+  }
+  return count;
+}
+
+function collectCredentialIds(plan: ExecutionPlan): string[] {
+  const ids: string[] = [];
+  if (plan.model?.credentialId) {
+    ids.push(plan.model.credentialId);
+  }
+  for (const tool of plan.tools) {
+    if (tool.credentialId) {
+      ids.push(tool.credentialId);
+    }
+  }
+  for (const sub of plan.subAgents) {
+    ids.push(...collectCredentialIds(sub));
+  }
+  return ids;
+}
 
 export const executeWorkflow = inngest.createFunction(
   {
@@ -24,97 +55,71 @@ export const executeWorkflow = inngest.createFunction(
         .fetchJsonAgentTree({ projectId });
 
       if (!agentTree?.agentTree) {
-        throw new Error("No agent tree found for this project");
+        throw new NonRetriableError("No agent tree found for this project");
       }
 
-      const plan = buildExecutionPlan(agentTree.agentTree);
-      validateExecutionPlan(plan);
-
-      await WorkflowRun.findByIdAndUpdate(runId, {
-        status: "running",
-        startedAt: new Date(),
-      });
-
-      const credentialCache = new Map<string, Record<string, any>>();
-
-      // Resolve model → LLM
-      const modelCred = await decryptById({
-        credentialId: plan.model!.credentialId,
-        actorId: userId,
-      });
-
-      const llm = createLLMClient({
-        provider: modelCred.provider,
-        modelName: plan.model!.modelName,
-        apiKey: modelCred.apiKey,
-      });
-
-      credentialCache.set(plan.model!.credentialId, modelCred);
-
-      // Resolve tools
-      const tools = await Promise.all(
-        plan.tools.map(async (t) => {
-          let credentialPayload: Record<string, any> | undefined;
-          if (t.credentialId) {
-            if (!credentialCache.has(t.credentialId)) {
-              const payload = await decryptById({
-                credentialId: t.credentialId,
-                actorId: userId,
-              });
-              credentialCache.set(t.credentialId, payload);
-            }
-            credentialPayload = credentialCache.get(t.credentialId);
-          }
-          return build(t.nodeRegistry, t.config, { credentialPayload });
-        }),
-      );
-
-      // Execute with timeout
-      const agent = createReactAgent({
-        llm,
-        tools,
-        prompt: plan.agent.instructions || "You are a helpful assistant.",
-        version: "v1",
-      });
-
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Execution timed out after 120 seconds")), 120_000),
-      );
-
-      const result = await Promise.race([
-        agent.invoke({
-          messages: [new HumanMessage(input || "")],
-        }),
-        timeoutPromise,
-      ]);
-
-      const lastMsg = result.messages[result.messages.length - 1];
-      const output =
-        typeof lastMsg.content === "string"
-          ? lastMsg.content
-          : JSON.stringify(lastMsg.content);
-
-      // Collect all credential IDs used
-      const allCredentialIds = [
-        plan.model!.credentialId,
-        ...plan.tools.map((t) => t.credentialId).filter(Boolean),
-      ].filter(Boolean) as string[];
-
-      if (allCredentialIds.length > 0) {
-        await markCredentialsUsed({ credentialIds: allCredentialIds });
+      let plan: ExecutionPlan;
+      try {
+        plan = buildExecutionPlan(agentTree.agentTree);
+        validateExecutionPlan(plan);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Workflow validation failed";
+        await WorkflowRun.findByIdAndUpdate(runId, {
+          status: "failed",
+          error: message,
+          completedAt: new Date(),
+        });
+        throw new NonRetriableError(message, { cause: err });
       }
 
-      await WorkflowRun.findByIdAndUpdate(runId, {
-        status: "completed",
-        output,
-        agentCount: 1,
-        toolCount: plan.tools.length,
-        modelProvider: modelCred.provider,
-        modelName: plan.model!.modelName,
-        completedAt: new Date(),
-      });
+      try {
+        await WorkflowRun.findByIdAndUpdate(runId, {
+          status: "running",
+          startedAt: new Date(),
+          executionVersion: 2,
+        });
 
-      return { output, agentCount: 1, toolCount: plan.tools.length };
+        const credentialCache = new Map<string, Record<string, any>>();
+
+        const output = await runAgent({
+          plan,
+          input: input || "",
+          userId,
+          credentialCache,
+          runId,
+        });
+
+        const totalAgents = countAgents(plan);
+        const totalTools = countTools(plan);
+        const allCredentialIds = [...new Set(collectCredentialIds(plan))];
+
+        if (allCredentialIds.length > 0) {
+          await markCredentialsUsed({ credentialIds: allCredentialIds });
+        }
+
+        await WorkflowRun.findByIdAndUpdate(runId, {
+          status: "completed",
+          output,
+          agentCount: totalAgents,
+          toolCount: totalTools,
+          executionVersion: 2,
+          modelProvider: plan.model?.credentialId
+            ? credentialCache.get(plan.model.credentialId)?.provider || ""
+            : "",
+          modelName: plan.model?.modelName || "",
+          completedAt: new Date(),
+        });
+
+        return { output, agentCount: totalAgents, toolCount: totalTools };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Execution failed";
+        await WorkflowRun.findByIdAndUpdate(runId, {
+          status: "failed",
+          error: message,
+          completedAt: new Date(),
+        });
+        throw err;
+      }
     });
 
     return { runId, ...result };

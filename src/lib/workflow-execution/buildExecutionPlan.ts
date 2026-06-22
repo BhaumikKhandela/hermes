@@ -1,19 +1,12 @@
-type ToolNodeDef = {
-  label: string;
-  nodeRegistry: string;
-  name: string;
-  config: Record<string, any>;
-  credentialId?: string | null;
-};
+import type { ExecutionPlan, ToolNodeDef } from "./types";
 
-export type ExecutionPlan = {
-  agent: { instructions: string; label: string };
-  model: { credentialId: string; modelName: string } | null;
-  tools: ToolNodeDef[];
-  subAgentNodes: any[];
-};
+let agentIdCounter = 0;
+let toolIdCounter = 0;
 
 export function buildExecutionPlan(agentTree: any): ExecutionPlan {
+  agentIdCounter = 0;
+  toolIdCounter = 0;
+
   const inputNode = agentTree.find((n: any) => n.node_name === "inputNode");
   if (!inputNode) {
     throw new Error("No inputNode found in agent tree");
@@ -26,13 +19,18 @@ export function buildExecutionPlan(agentTree: any): ExecutionPlan {
     throw new Error("No agent node found under inputNode");
   }
 
+  return parseAgentNode(agentNode, agentNode.children || []);
+}
+
+function parseAgentNode(node: any, children: any[]): ExecutionPlan {
   const agent = {
-    instructions:
-      agentNode?.config?.instructions || agentNode?.config?.systemPrompt || "",
-    label: agentNode.config?.label || "",
+    id: `agent_${++agentIdCounter}`,
+    label: node.config?.label || "",
+    instructions: node.config?.instructions || node.config?.systemPrompt || "",
+    description: node.config?.description,
   };
 
-  const modelNode = agentNode.children.find(
+  const modelNode = children.find(
     (n: any) => n.node_name === "modelNode",
   );
   const model = modelNode
@@ -42,21 +40,20 @@ export function buildExecutionPlan(agentTree: any): ExecutionPlan {
       }
     : null;
 
-  const toolNodes = agentNode.children.filter(
-    (n: any) => n.node_name === "tool",
-  );
+  const tools: ToolNodeDef[] = children
+    .filter((n: any) => n.node_name === "tool")
+    .map((tool: any) => ({
+      id: `tool_${++toolIdCounter}`,
+      label: tool.config?.label || "",
+      nodeRegistry: tool.config?.nodeRegistry || "",
+      name: tool.config?.name || "",
+      config: tool.config?.config || {},
+      credentialId: tool.config?.credentialId || null,
+    }));
 
-  const tools: ToolNodeDef[] = toolNodes.map((tool: any) => ({
-    label: tool.config?.label || "",
-    nodeRegistry: tool.config?.nodeRegistry || "",
-    name: tool.config?.name || "",
-    config: tool.config?.config || {},
-    credentialId: tool.config?.credentialId || null,
-  }));
+  const subAgents: ExecutionPlan[] = children
+    .filter((n: any) => n.node_name === "subAgent")
+    .map((sub: any) => parseAgentNode(sub, sub.children || []));
 
-  const subAgentNodes = agentNode.children.filter(
-    (n: any) => n.node_name === "subAgent",
-  );
-
-  return { agent, model, tools, subAgentNodes };
+  return { agent, model, tools, subAgents };
 }

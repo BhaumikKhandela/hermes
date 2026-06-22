@@ -15,7 +15,7 @@ export const createModelTool: ToolFactory = (config) => {
         return "Model tool is not configured. Double-click the node and add an API key credential.";
       }
 
-      const llm = createLLMClient({ provider, modelName, apiKey });
+      const llm = await createLLMClient({ provider, modelName, apiKey });
       const messages = system
         ? [new SystemMessage(system), new HumanMessage(prompt)]
         : [new HumanMessage(prompt)];
