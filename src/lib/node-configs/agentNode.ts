@@ -9,7 +9,7 @@ export function agentNodeConfig(props: nodeConfigProps) {
     position,
     data: {
       label: "AI Agent",
-      icon: "",
+      icon: icon || "/icons/bot.png",
       sub: "Tools Agent",
       instructions: "",
       description: "",
@@ -20,6 +20,13 @@ export function agentNodeConfig(props: nodeConfigProps) {
           name: "left",
           type: "target",
           LinkTo: [],
+        },
+        {
+          name: "right",
+          type: "source",
+          LinkTo: [
+            { nodeName: "agent", handlePosition: "left" },
+          ],
         },
         {
           name: "bottom",
