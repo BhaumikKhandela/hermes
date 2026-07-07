@@ -28,15 +28,21 @@ function validatePositions(nodes: any[]): string | null {
   return null;
 }
 
+function extractAgentConnections(input: any): any[] {
+  if (!Array.isArray(input)) return [];
+  const connEntry = input.find((n: any) => n.agent_connections);
+  return connEntry?.agent_connections || [];
+}
+
 function toNodeTree(input: any): any[] {
   if (Array.isArray(input)) {
-    const hasValid = input.some(
-      (n) =>
+    const nodes = input.filter(
+      (n: any) =>
         n.node_name === "inputNode" ||
         n.node_name === "agent" ||
         n.node_name === "tool",
     );
-    if (hasValid) return input;
+    if (nodes.length > 0) return nodes;
   }
 
   const agents = input?.agents;
@@ -97,6 +103,37 @@ export const saveAgentTreeTool = tool(
 
       const agent_edges = autoConnect(nodes);
 
+      // Resolve agent_connections labels to node IDs and merge with auto-computed edges
+      const connections = extractAgentConnections(raw);
+      if (connections.length > 0) {
+        const labelToId = new Map<string, string>();
+        for (const n of nodes) {
+          if (n.type === "agent" && n.data?.label) {
+            labelToId.set(n.data.label as string, n.id);
+          }
+        }
+        for (const conn of connections) {
+          const sourceId = labelToId.get(conn.from);
+          const targetId = labelToId.get(conn.to);
+          if (sourceId && targetId) {
+            const exists = agent_edges.some(
+              (e: any) => e.source === sourceId && e.target === targetId,
+            );
+            if (!exists) {
+              agent_edges.push({
+                id: `e-${sourceId}-${targetId}-conn`,
+                source: sourceId,
+                sourceHandle: "out",
+                target: targetId,
+                targetHandle: "in",
+                animated: true,
+                style: { stroke: "#3b82f6", strokeWidth: 2 },
+              });
+            }
+          }
+        }
+      }
+
       const agentInstruction = extractAgentStructure(treeInput);
 
       await agent.updateOrCreateAgent({
@@ -104,7 +141,7 @@ export const saveAgentTreeTool = tool(
         userId,
         agent_edges,
         agent_nodes: nodes,
-        agentTree: raw,
+        agentTree: Array.isArray(raw) ? raw.filter((n: any) => !n.agent_connections) : raw,
         agentInstruction,
       });
 
