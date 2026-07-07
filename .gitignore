@@ -42,3 +42,5 @@ next-env.d.ts
 
 /public/chat-history
 /public/memory
+/public/agent-builder/*.todos.json
+/public/agent-builder/working-agent-folder/
