@@ -1,14 +1,4 @@
-export function extractAgentStructure(agentTree: any) {
-  const inputNode = agentTree.find((n: any) => n.node_name === "inputNode");
-  if (!inputNode) {
-    throw new Error("No inputNode found");
-  }
-
-  const agentNode = inputNode.children.find((n: any) => n.node_name === "agent");
-  if (!agentNode) {
-    throw new Error("No agent found under inputNode");
-  }
-
+function parseOneAgent(agentNode: any) {
   const agent = {
     instructions:
       agentNode?.config?.instructions || agentNode?.config?.systemPrompt,
@@ -70,10 +60,21 @@ export function extractAgentStructure(agentTree: any) {
         });
     });
 
-  return {
-    agent,
-    agentTools,
-    subAgents,
-    subAgentTools,
-  };
+  return { agent, agentTools, subAgents, subAgentTools };
+}
+
+export function extractAgentStructure(agentTree: any) {
+  const inputNode = agentTree.find((n: any) => n.node_name === "inputNode");
+  if (!inputNode) {
+    throw new Error("No inputNode found");
+  }
+
+  const agentNodes = inputNode.children.filter(
+    (n: any) => n.node_name === "agent",
+  );
+  if (agentNodes.length === 0) {
+    throw new Error("No agent nodes found under inputNode");
+  }
+
+  return agentNodes.map(parseOneAgent);
 }

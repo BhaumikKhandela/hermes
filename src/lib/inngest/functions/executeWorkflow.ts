@@ -8,23 +8,31 @@ import { runAgent } from "@/lib/workflow-execution/runAgent";
 import { markCredentialsUsed } from "@/lib/credentials/credentialService";
 import type { ExecutionPlan } from "@/lib/workflow-execution/types";
 
-function countAgents(plan: ExecutionPlan): number {
+function countAgentsInPlan(plan: ExecutionPlan): number {
   let count = 1;
   for (const sub of plan.subAgents) {
-    count += countAgents(sub);
+    count += countAgentsInPlan(sub);
   }
   return count;
 }
 
-function countTools(plan: ExecutionPlan): number {
+function countAgents(pipeline: ExecutionPlan[]): number {
+  return pipeline.reduce((sum, plan) => sum + countAgentsInPlan(plan), 0);
+}
+
+function countToolsInPlan(plan: ExecutionPlan): number {
   let count = plan.tools.length;
   for (const sub of plan.subAgents) {
-    count += countTools(sub);
+    count += countToolsInPlan(sub);
   }
   return count;
 }
 
-function collectCredentialIds(plan: ExecutionPlan): string[] {
+function countTools(pipeline: ExecutionPlan[]): number {
+  return pipeline.reduce((sum, plan) => sum + countToolsInPlan(plan), 0);
+}
+
+function collectCredentialIdsInPlan(plan: ExecutionPlan): string[] {
   const ids: string[] = [];
   if (plan.model?.credentialId) {
     ids.push(plan.model.credentialId);
@@ -35,9 +43,13 @@ function collectCredentialIds(plan: ExecutionPlan): string[] {
     }
   }
   for (const sub of plan.subAgents) {
-    ids.push(...collectCredentialIds(sub));
+    ids.push(...collectCredentialIdsInPlan(sub));
   }
   return ids;
+}
+
+function collectCredentialIds(pipeline: ExecutionPlan[]): string[] {
+  return pipeline.flatMap((plan) => collectCredentialIdsInPlan(plan));
 }
 
 export const executeWorkflow = inngest.createFunction(
@@ -58,10 +70,12 @@ export const executeWorkflow = inngest.createFunction(
         throw new NonRetriableError("No agent tree found for this project");
       }
 
-      let plan: ExecutionPlan;
+      let pipeline: ExecutionPlan[];
       try {
-        plan = buildExecutionPlan(agentTree.agentTree);
-        validateExecutionPlan(plan);
+        pipeline = buildExecutionPlan(agentTree.agentTree);
+        for (const step of pipeline) {
+          validateExecutionPlan(step);
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Workflow validation failed";
         await WorkflowRun.findByIdAndUpdate(runId, {
@@ -81,21 +95,31 @@ export const executeWorkflow = inngest.createFunction(
 
         const credentialCache = new Map<string, Record<string, any>>();
 
-        const output = await runAgent({
-          plan,
-          input: input || "",
-          userId,
-          credentialCache,
-          runId,
-        });
+        let output = input || "";
+        for (const step of pipeline) {
+          output = await runAgent({
+            plan: step,
+            input: output,
+            userId,
+            credentialCache,
+            runId,
+          });
+        }
 
-        const totalAgents = countAgents(plan);
-        const totalTools = countTools(plan);
-        const allCredentialIds = [...new Set(collectCredentialIds(plan))];
+        const totalAgents = countAgents(pipeline);
+        const totalTools = countTools(pipeline);
+        const allCredentialIds = [...new Set(collectCredentialIds(pipeline))];
 
         if (allCredentialIds.length > 0) {
           await markCredentialsUsed({ credentialIds: allCredentialIds });
         }
+
+        const modelProviders = pipeline.map((s) =>
+          s.model?.credentialId
+            ? credentialCache.get(s.model.credentialId)?.provider || ""
+            : "",
+        );
+        const modelNames = pipeline.map((s) => s.model?.modelName || "");
 
         await WorkflowRun.findByIdAndUpdate(runId, {
           status: "completed",
@@ -103,10 +127,8 @@ export const executeWorkflow = inngest.createFunction(
           agentCount: totalAgents,
           toolCount: totalTools,
           executionVersion: 2,
-          modelProvider: plan.model?.credentialId
-            ? credentialCache.get(plan.model.credentialId)?.provider || ""
-            : "",
-          modelName: plan.model?.modelName || "",
+          modelProvider: modelProviders,
+          modelName: modelNames,
           completedAt: new Date(),
         });
 

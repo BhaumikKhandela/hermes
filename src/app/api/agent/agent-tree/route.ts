@@ -1,6 +1,6 @@
-import { graph } from "@/lib/agent-builder/graph";
+import { graph } from "@/lib/agents/graph";
 import { LLM } from "@/lib/llm/LLM";
-import { createMemoryAgent } from "@/lib/memory/MemoryAgent";
+import { createMemoryAgent } from "@/lib/agents/memory/MemoryAgent";
 import { withErrorHandler } from "@/lib/mongodb/withErrorHandler";
 import { Agent } from "@/models/AgentSchema";
 import { agentService } from "@/services/AgentService";

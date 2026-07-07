@@ -1,5 +1,5 @@
 import { LLM } from "@/lib/llm/LLM";
-import { createMemoryAgent } from "@/lib/memory/MemoryAgent";
+import { createMemoryAgent } from "@/lib/agents/memory/MemoryAgent";
 import { withErrorHandler } from "@/lib/mongodb/withErrorHandler";
 import { writeToChatHistoryTool } from "@/lib/tools/chatHistoryTool";
 import { ContentBlock, createAgent } from "langchain";

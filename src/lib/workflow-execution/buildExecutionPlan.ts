@@ -3,7 +3,7 @@ import type { ExecutionPlan, ToolNodeDef } from "./types";
 let agentIdCounter = 0;
 let toolIdCounter = 0;
 
-export function buildExecutionPlan(agentTree: any): ExecutionPlan {
+export function buildExecutionPlan(agentTree: any): ExecutionPlan[] {
   agentIdCounter = 0;
   toolIdCounter = 0;
 
@@ -12,14 +12,16 @@ export function buildExecutionPlan(agentTree: any): ExecutionPlan {
     throw new Error("No inputNode found in agent tree");
   }
 
-  const agentNode = inputNode.children.find(
+  const agentNodes = inputNode.children.filter(
     (n: any) => n.node_name === "agent",
   );
-  if (!agentNode) {
-    throw new Error("No agent node found under inputNode");
+  if (agentNodes.length === 0) {
+    throw new Error("No agent nodes found under inputNode");
   }
 
-  return parseAgentNode(agentNode, agentNode.children || []);
+  return agentNodes.map((node: any) =>
+    parseAgentNode(node, node.children || []),
+  );
 }
 
 function parseAgentNode(node: any, children: any[]): ExecutionPlan {
