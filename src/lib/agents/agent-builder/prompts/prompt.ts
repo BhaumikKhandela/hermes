@@ -27,8 +27,13 @@ HOW TO EXECUTE
 1. **Read the plan** — The plan filename will be provided in your instructions. Use \`read_file\` to load it from \`working-agent-folder/\`.
 2. **Create todos** — Use \`write_todos\` to break the work into steps.
 3. **Work through todos** — Update each task's status as you go.
-4. **Write agent tree JSON** — Build the agent tree in the node-tree format (not flat plan format). Each agent from the plan becomes an agent node with its tools as child tool nodes. **All agents for a workflow go under a single \`inputNode\`**, not separate inputNodes. Use this exact schema for a multi-agent pipeline:
+ 4. **Write agent tree JSON** — Build the agent tree in the node-tree format (not flat plan format). Each agent from the plan becomes an agent node with its tools as child tool nodes. **All agents for a workflow go under a single \`inputNode\`**, not separate inputNodes.
 
+   **Two execution patterns:**
+   - **Parallel (default):** All sibling agents under \`inputNode\` run at the same time. The input node connects to every agent automatically. Use this when agents work independently on the same input.
+   - **Sequential:** Agents run one after another. Add an \`agent_connections\` entry to the JSON root array to define the chain. Use this when an agent's output is needed by the next agent.
+
+   **Parallel pattern (no \`agent_connections\` needed):**
    \`\`\`json
    [
      {
@@ -66,6 +71,68 @@ HOW TO EXECUTE
      }
    ]
    \`\`\`
+
+   **Sequential pattern (add \`agent_connections\` at root level):**
+   \`\`\`json
+   [
+     {
+       "node_name": "inputNode",
+       "config": { "label": "Input", "name": "Input", "position": { "x": 50, "y": 250 } },
+       "children": [
+         {
+           "node_name": "agent",
+           "config": {
+             "label": "Schema Analyzer",
+             "name": "Schema Analyzer",
+             "instructions": "Analyze the database schema and identify all tables and relationships.",
+             "model": "OpenAI",
+             "position": { "x": 350, "y": 150 }
+           },
+           "children": [
+             { "node_name": "tool", "config": { "label": "readFile", "name": "readFile", "position": { "x": 650, "y": 50 } } },
+             { "node_name": "tool", "config": { "label": "writeFile", "name": "writeFile", "position": { "x": 650, "y": 150 } } }
+           ]
+         },
+         {
+           "node_name": "agent",
+           "config": {
+             "label": "Schema Mapper",
+             "name": "Schema Mapper",
+             "instructions": "Read the analysis from Schema Analyzer and create an ER diagram.",
+             "model": "OpenAI",
+             "position": { "x": 350, "y": 450 }
+           },
+           "children": [
+             { "node_name": "tool", "config": { "label": "readFile", "name": "readFile", "position": { "x": 650, "y": 350 } } },
+             { "node_name": "tool", "config": { "label": "writeFile", "name": "writeFile", "position": { "x": 650, "y": 450 } } }
+           ]
+         },
+         {
+           "node_name": "agent",
+           "config": {
+             "label": "Script Generator",
+             "name": "Script Generator",
+             "instructions": "Read the ER diagram from Schema Mapper and generate SQL migration scripts.",
+             "model": "OpenAI",
+             "position": { "x": 350, "y": 750 }
+           },
+           "children": [
+             { "node_name": "tool", "config": { "label": "writeFile", "name": "writeFile", "position": { "x": 650, "y": 650 } } },
+             { "node_name": "tool", "config": { "label": "executeCommand", "name": "executeCommand", "position": { "x": 650, "y": 750 } } }
+           ]
+         }
+       ]
+     },
+     {
+       "agent_connections": [
+         { "from": "Schema Analyzer", "to": "Schema Mapper" },
+         { "from": "Schema Mapper", "to": "Script Generator" }
+       ]
+     }
+   ]
+   \`\`\`
+
+   The \`agent_connections\` entries reference agents by their \`label\`. Choose either pattern based on the plan — parallel for independent agents, sequential when order matters.
 
    If the plan specifies **orchestrator-workers** (a manager agent that delegates to parallel worker agents), use this structure instead — the root agent is the orchestrator and each worker is a \`subAgent\` nested under it, each with its own model and tools:
 
