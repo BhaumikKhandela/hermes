@@ -23,7 +23,7 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
 
   let idCount = startId;
 
-  const traverse = (node: any, parentName: string | null = null, pipelineCtx: { index: number } | null = null) => {
+  const traverse = (node: any, parentName: string | null = null) => {
     const nodeType = node.node_name || node.nodeName;
 
     let normalizedType = "";
@@ -82,11 +82,6 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
           });
         }
 
-        // Tag sibling agents under inputNode with their pipeline position
-        if (normalizedType === "agent" && parentName === "inputNode" && pipelineCtx) {
-          newNode.data = { ...newNode.data, pipelineIndex: pipelineCtx.index++ };
-        }
-
         newNode.referenceTo = parentName ? [parentName] : [];
 
         newNodes.push(newNode);
@@ -95,15 +90,12 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
     }
 
     if (node.children && Array.isArray(node.children)) {
-      node.children.forEach((child: any) => traverse(child, nodeType, pipelineCtx));
+      node.children.forEach((child: any) => traverse(child, nodeType));
     }
   };
 
   if (!nodesInput) return { nodes: [], nextId: idCount };
-  nodesInput.forEach((rootNode: any) => {
-    const pipelineCtx = { index: 0 };
-    traverse(rootNode, null, pipelineCtx);
-  });
+  nodesInput.forEach((rootNode: any) => traverse(rootNode));
 
   return {
     nodes: newNodes,

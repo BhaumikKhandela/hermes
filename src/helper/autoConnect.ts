@@ -122,59 +122,5 @@ export const autoConnect = (nodes: any[]): any[] => {
     });
   });
 
-  // 3. Pipeline edges — connect sequential sibling agents
-  const pipelineAgents = nodes
-    .filter((n: any) => n.type === "agent" && n.data?.pipelineIndex !== undefined)
-    .sort((a: any, b: any) => (a.data.pipelineIndex as number) - (b.data.pipelineIndex as number));
-
-  if (pipelineAgents.length > 1) {
-    const inputNode = nodes.find((n: any) => n.type === "inputNode");
-
-    for (let i = 0; i < pipelineAgents.length - 1; i++) {
-      const source = pipelineAgents[i];
-      const target = pipelineAgents[i + 1];
-
-      const exists = newEdges.some(
-        (e: any) =>
-          e.source === source.id &&
-          e.target === target.id &&
-          e.sourceHandle === "out",
-      );
-
-      if (!exists) {
-        newEdges.push({
-          id: `e-${source.id}-out-${target.id}-in-pipeline`,
-          source: source.id,
-          sourceHandle: "out",
-          target: target.id,
-          targetHandle: "in",
-          animated: true,
-          style: { stroke: "#3b82f6", strokeWidth: 2 },
-        });
-      }
-    }
-
-    // Remove redundant inputNode→agent edges for non-first pipeline agents
-    if (inputNode) {
-      const redundantEdgeIds = new Set<string>();
-      for (let i = 1; i < pipelineAgents.length; i++) {
-        const agent = pipelineAgents[i];
-        for (let j = newEdges.length - 1; j >= 0; j--) {
-          if (
-            newEdges[j].source === inputNode.id &&
-            newEdges[j].target === agent.id
-          ) {
-            redundantEdgeIds.add(newEdges[j].id);
-          }
-        }
-      }
-      for (let j = newEdges.length - 1; j >= 0; j--) {
-        if (redundantEdgeIds.has(newEdges[j].id)) {
-          newEdges.splice(j, 1);
-        }
-      }
-    }
-  }
-
   return newEdges;
 };
