@@ -5,6 +5,7 @@ import { modelNodeConfig } from "@/lib/node-configs/modelNode";
 import { subAgentNodeConfig } from "@/lib/node-configs/subAgentNode";
 import { toolNodeConfig } from "@/lib/node-configs/toolNode";
 import { vectordbNodeConfig } from "@/lib/node-configs/vectorDbNode";
+import { resolveToolIcon, resolveModelIcon } from "@/lib/workflow-tools/iconMap";
 
 export const buildNodesHelper = (nodesInput: any[], startId: number) => {
   const nodeBuilderFunc: any = {
@@ -22,7 +23,7 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
 
   let idCount = startId;
 
-  const traverse = (node: any, parentName: string | null = null) => {
+  const traverse = (node: any, parentName: string | null = null, pipelineCtx: { index: number } | null = null) => {
     const nodeType = node.node_name || node.nodeName;
 
     let normalizedType = "";
@@ -50,11 +51,13 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
         let newNode;
 
         if (normalizedType === "tool") {
+          const toolIcon = node.config?.icon
+            || resolveToolIcon(node.config?.nodeRegistry || node.config?.name || "");
           newNode = builder(
             {
               id,
               label: node.config?.label,
-              icon: node.config?.icon,
+              icon: toolIcon,
               position: node.config?.position,
               referenceTo: parentName ? [parentName] : [],
             },
@@ -65,14 +68,23 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
             },
           );
         } else {
+          const resolvedIcon = node.config?.icon
+            || (normalizedType === "model"
+              ? resolveModelIcon(node.config?.label || node.config?.name || "")
+              : "");
           newNode = builder({
             id,
             label: node.config?.label,
-            icon: node.config?.icon || "",
+            icon: resolvedIcon,
             position: node.config?.position,
             data: node.config || {},
             referenceTo: parentName ? [parentName] : [],
           });
+        }
+
+        // Tag sibling agents under inputNode with their pipeline position
+        if (normalizedType === "agent" && parentName === "inputNode" && pipelineCtx) {
+          newNode.data = { ...newNode.data, pipelineIndex: pipelineCtx.index++ };
         }
 
         newNode.referenceTo = parentName ? [parentName] : [];
@@ -83,12 +95,15 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
     }
 
     if (node.children && Array.isArray(node.children)) {
-      node.children.forEach((child: any) => traverse(child, nodeType));
+      node.children.forEach((child: any) => traverse(child, nodeType, pipelineCtx));
     }
   };
 
   if (!nodesInput) return { nodes: [], nextId: idCount };
-  nodesInput.forEach((rootNode: any) => traverse(rootNode));
+  nodesInput.forEach((rootNode: any) => {
+    const pipelineCtx = { index: 0 };
+    traverse(rootNode, null, pipelineCtx);
+  });
 
   return {
     nodes: newNodes,
