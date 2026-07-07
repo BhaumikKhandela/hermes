@@ -15,6 +15,11 @@ import {
   updateTodos,
 } from "@/stores/chatSlice";
 import TaskCard from "../TaskCard";
+import PlanApprovalCard from "./PlanApprovalCard";
+import MCQCard from "./MCQCard";
+import { Button } from "@/components/ui/button";
+import ToolCallBadge from "./ToolCallBadge";
+import { Cpu } from "lucide-react";
 
 const ChatPanel = ({
   chatWidth,
@@ -38,8 +43,21 @@ const ChatPanel = ({
     dispatch(getChatHistory({ userId, projectId }));
   }, [userId, dispatch]);
 
+  const handleSubmitMcqs = () => {
+    sendMessage(JSON.stringify(selectedAnswers));
+  };
+
   const userMessageRef = useRef<string[]>([]);
   const typingRef = useRef(false);
+
+  const [mcqs, setMcqs] = useState<any[]>([]);
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
+  const [planPending, setPlanPending] = useState<{
+    summary: string;
+    agents: any[];
+  } | null>(null);
+  const [buildingMessage, setBuildingMessage] = useState(false);
+  const [toolCalls, setToolCalls] = useState<any[]>([]);
 
   const thinkingQueueRef = useRef<string[]>([]);
   const thinkingTypingRef = useRef(false);
@@ -68,11 +86,16 @@ const ChatPanel = ({
     setTimeout(typeNextUserMessage, 3);
   };
 
-  const sendMessage = async () => {
-    const userMessage = input.trim();
+  const sendMessage = async (text?: string) => {
+    const userMessage = (text || input).trim();
 
     userMessageRef.current = [];
     setInput("");
+    setPlanPending(null);
+    setMcqs([]);
+    setSelectedAnswers({});
+    setBuildingMessage(false);
+    setToolCalls([]);
 
     dispatch(
       addUserAndAiPlaceholder({
@@ -122,6 +145,7 @@ const ChatPanel = ({
             const data = JSON.parse(payload);
 
             if (data.message !== undefined && data.message !== null) {
+              setBuildingMessage(false);
               for (const char of data.message) {
                 userMessageRef.current.push(char);
               }
@@ -158,6 +182,31 @@ const ChatPanel = ({
               }
             }
 
+            if (data.mcq !== undefined && data.mcq !== null) {
+              setMcqs((prev) => [...prev, data.mcq]);
+            }
+
+            if (data.plan_approval !== undefined && data.plan_approval !== null) {
+              setPlanPending({
+                summary: data.plan_approval.summary,
+                agents: data.plan_approval.agents ?? [],
+              });
+            }
+
+            if (data.tool_call !== undefined && data.tool_call !== null) {
+              setToolCalls((prev) => {
+                const idx = prev.findIndex(
+                  (t) => t.tool_name === data.tool_call.tool_name,
+                );
+                if (idx >= 0) {
+                  const updated = [...prev];
+                  updated[idx] = data.tool_call;
+                  return updated;
+                }
+                return [...prev, data.tool_call];
+              });
+            }
+
             if (data.thinking !== undefined && data.thinking !== null) {
               for (const char of data.thinking) {
                 thinkingQueueRef.current.push(char);
@@ -169,6 +218,10 @@ const ChatPanel = ({
             }
           } else if (trimmed.startsWith("event:")) {
             const eventType = trimmed.replace("event:", "").trim();
+
+            if (eventType === "clear_todos") {
+              dispatch(clearTodos());
+            }
 
             if (eventType === "end") {
               setLoading(false);
@@ -200,6 +253,7 @@ const ChatPanel = ({
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, loading]);
+
   return (
     <div
       style={{ width: `${chatWidth}px ` }}
@@ -219,6 +273,62 @@ const ChatPanel = ({
         {messages.map((msg, i) => (
           <ChatMessages key={i} message={msg} loading={loading} />
         ))}
+
+        {toolCalls.length > 0 && <ToolCallBadge toolCalls={toolCalls} />}
+
+        {buildingMessage && toolCalls.length === 0 && (
+          <div className="flex items-center gap-2 text-sm text-slate-500 py-2">
+            <Cpu className="w-4 h-4 animate-pulse text-blue-500" />
+            <span>Building your agent tree...</span>
+          </div>
+        )}
+
+        {mcqs.map((mcq: any, i: number) => (
+          <MCQCard
+            key={i}
+            mcq={mcq}
+            index={i}
+            total={mcqs.length}
+            selectedAnswer={selectedAnswers[i]}
+            onSelect={(answer: string) =>
+              setSelectedAnswers((prev) => ({ ...prev, [i]: answer }))
+            }
+          />
+        ))}
+        {mcqs.length > 0 &&
+          Object.keys(selectedAnswers).length === mcqs.length && (
+            <div className="flex justify-end">
+              <Button onClick={handleSubmitMcqs}>
+                Submit Answers
+              </Button>
+            </div>
+          )}
+
+        {planPending && (
+          <PlanApprovalCard
+            summary={planPending.summary}
+            agents={planPending.agents}
+            onApprove={() => {
+              setBuildingMessage(true);
+              sendMessage(
+                JSON.stringify({ type: "approve" }),
+              );
+            }}
+            onEdit={() => {
+              const edits = prompt("What changes would you like?");
+              if (edits)
+                sendMessage(
+                  JSON.stringify({ type: "edit", message: edits }),
+                );
+            }}
+            onReject={() =>
+              sendMessage(
+                JSON.stringify({ type: "reject" }),
+              )
+            }
+          />
+        )}
+
         <div ref={bottomRef} className="mb-10" />
       </div>
       {todos.length > 0 && <TaskCard todos={todos} />}
@@ -226,7 +336,7 @@ const ChatPanel = ({
       <ChatInput
         input={input}
         setInput={setInput}
-        sendMessage={sendMessage}
+        sendMessage={() => sendMessage()}
         loading={loading}
       />
     </div>

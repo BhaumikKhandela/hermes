@@ -14,7 +14,7 @@ import { cn, truncateTitle } from "@/lib/utils";
 import { TodoListType, TodoStatus } from "@/stores/chatSlice";
 
 const TaskCard = ({ todos }: { todos: TodoListType }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const completedTodos = useMemo(
     () => todos.filter((t) => t.status === "completed").length,
