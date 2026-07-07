@@ -87,7 +87,7 @@ export const MiddlePanel = ({
 
     const timer = setTimeout(() => {
       dispatch(handleAutoConnect());
-    }, 2000);
+    }, 0);
 
     return () => clearTimeout(timer);
   }, [nodes, dispatch]);
