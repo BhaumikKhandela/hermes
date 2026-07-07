@@ -3,6 +3,7 @@ import { modelNodeConfig } from "@/lib/node-configs/modelNode";
 import { agentNodeConfig } from "@/lib/node-configs/agentNode";
 import { subAgentNodeConfig } from "@/lib/node-configs/subAgentNode";
 import { getRegistration } from "./registry";
+import { resolveToolIcon, resolveModelIcon } from "./iconMap";
 
 type CreateNodeInput = {
   nodeRegistry: string;
@@ -29,13 +30,13 @@ export function createNodeFromRegistry({
   }
 
   if (nodeRegistry === "model") {
-    const node = modelNodeConfig({ id, label: reg.label, icon: "", position });
+    const node = modelNodeConfig({ id, label: reg.label, icon: resolveModelIcon(reg.label), position });
     node.data.nodeRegistry = "model";
     return node;
   }
 
   return toolNodeConfig(
-    { id, label: reg.label, icon: reg.icon || "", position },
+    { id, label: reg.label, icon: resolveToolIcon(reg.nodeRegistry), position },
     { name: reg.label, nodeRegistry: reg.nodeRegistry, config: {} },
   );
 }

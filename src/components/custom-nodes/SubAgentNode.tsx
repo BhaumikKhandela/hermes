@@ -8,6 +8,7 @@ import {
   Plus,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import Image from "next/image";
 
 export function SubAgentNode({ data }: any) {
   const { theme, resolvedTheme } = useTheme();
@@ -60,7 +61,13 @@ export function SubAgentNode({ data }: any) {
               isDark ? "bg-orange-500/10" : "bg-orange-50"
             }`}
           >
-            <Layers className="w-4 h-4 text-orange-500" />
+            {data.icon ? (
+              <div className="relative w-4 h-4">
+                <Image src={data.icon} alt="" fill className="object-contain" sizes="16px" />
+              </div>
+            ) : (
+              <Layers className="w-4 h-4 text-orange-500" />
+            )}
           </div>
 
           {/* Worker status */}

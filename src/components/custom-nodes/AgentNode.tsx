@@ -1,6 +1,7 @@
 "use client";
 import { Handle, Position } from "@xyflow/react";
 import { useTheme } from "next-themes";
+import Image from "next/image";
 
 import { CpuIcon, PlusIcon } from "lucide-react";
 import { THEME } from "./nodeThemes";
@@ -50,13 +51,19 @@ export function AgentNode({ data }: any) {
               isDark ? "bg-blue-500/10" : "bg-blue-50"
             }`}
           >
-            <CpuIcon
-              className={`w-3.5 h-3.5 ${
-                data.running
-                  ? "text-blue-500 animate-pulse"
-                  : "text-slate-500"
-              }`}
-            />
+            {data.icon ? (
+              <div className="relative w-4 h-4">
+                <Image src={data.icon} alt="" fill className="object-contain" sizes="16px" />
+              </div>
+            ) : (
+              <CpuIcon
+                className={`w-3.5 h-3.5 ${
+                  data.running
+                    ? "text-blue-500 animate-pulse"
+                    : "text-slate-500"
+                }`}
+              />
+            )}
           </div>
 
           <span

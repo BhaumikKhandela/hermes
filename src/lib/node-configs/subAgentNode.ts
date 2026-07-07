@@ -11,7 +11,7 @@ export function subAgentNodeConfig(props: nodeConfigProps) {
 
     data: {
       label: "Sub Agent",
-      icon: "",
+      icon: icon || "/icons/bot.png",
       sub: "worker Agent",
       instructions: "",
       description: "",

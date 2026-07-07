@@ -46,7 +46,7 @@ export function ToolNode({ data }: { data: ToolNodeData }) {
             src={data.icon}
             alt={data.label}
             fill
-            className="object-contain grayscale group-hover:grayscale-0 transition-all"
+            className="object-contain"
             sizes="24px"
           />
         </div>
