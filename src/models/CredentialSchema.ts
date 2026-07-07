@@ -20,7 +20,6 @@ const credentialSchema = new mongoose.Schema(
     },
     providerAccountId: { type: String, required: false },
     name: { type: String, required: true },
-    encryptedDEK: { type: Buffer, required: true },
     ciphertext: { type: Buffer, required: true },
     iv: { type: Buffer, required: true },
     authTag: { type: Buffer, required: true },

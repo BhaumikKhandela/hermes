@@ -1,52 +1,33 @@
-import {
-  KMSClient,
-  GenerateDataKeyCommand,
-  DecryptCommand,
-} from "@aws-sdk/client-kms";
 import crypto from "crypto";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
-const AUTH_TAG_LENGTH = 16;
+const KEY_HEX_LENGTH = 64;
 
-function getKmsClient(): KMSClient {
-  return new KMSClient({
-    region: process.env.AWS_REGION || "us-east-1",
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-    },
-  });
+function getMasterKey(): Buffer {
+  const hex = process.env.MASTER_ENCRYPTION_KEY;
+  if (!hex || hex.length !== KEY_HEX_LENGTH) {
+    throw new Error(
+      `MASTER_ENCRYPTION_KEY must be a ${KEY_HEX_LENGTH}-character hex string`,
+    );
+  }
+  return Buffer.from(hex, "hex");
 }
 
-function getKeyId(): string {
-  return process.env.AWS_KMS_KEY_ID || "";
+export async function encryptPayload(
+  plaintext: string,
+): Promise<{ ciphertext: Buffer; iv: Buffer; authTag: Buffer }> {
+  const key = getMasterKey();
+  return aesEncrypt(plaintext, key);
 }
 
-export async function kmsGenerateDEK(): Promise<{
-  plaintextKey: Buffer;
-  encryptedKey: Buffer;
-}> {
-  const client = getKmsClient();
-  const cmd = new GenerateDataKeyCommand({
-    KeyId: getKeyId(),
-    KeySpec: "AES_256",
-  });
-  const res = await client.send(cmd);
-  return {
-    plaintextKey: Buffer.from(res.Plaintext!),
-    encryptedKey: Buffer.from(res.CiphertextBlob!),
-  };
-}
-
-export async function kmsDecrypt(encryptedKey: Buffer): Promise<Buffer> {
-  const client = getKmsClient();
-  const cmd = new DecryptCommand({
-    CiphertextBlob: encryptedKey,
-    KeyId: getKeyId(),
-  });
-  const res = await client.send(cmd);
-  return Buffer.from(res.Plaintext!);
+export async function decryptPayload(
+  ciphertext: Buffer,
+  iv: Buffer,
+  authTag: Buffer,
+): Promise<string> {
+  const key = getMasterKey();
+  return aesDecrypt(ciphertext, key, iv, authTag);
 }
 
 export function aesEncrypt(

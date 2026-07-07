@@ -1,10 +1,8 @@
 import mongoose from "mongoose";
 import { Credential } from "@/models/CredentialSchema";
 import {
-  kmsGenerateDEK,
-  kmsDecrypt,
-  aesEncrypt,
-  aesDecrypt,
+  encryptPayload,
+  decryptPayload,
 } from "./encryption";
 import { NotFoundError, ForbiddenError, ConflictError } from "@/lib/errors/http-errors";
 import type {
@@ -48,8 +46,7 @@ type SaveInput = {
 export async function saveCredential(input: SaveInput): Promise<CredentialMetadata> {
   const plaintext = JSON.stringify(input.payload);
 
-  const { plaintextKey, encryptedKey } = await kmsGenerateDEK();
-  const { ciphertext, iv, authTag } = aesEncrypt(plaintext, plaintextKey);
+  const { ciphertext, iv, authTag } = await encryptPayload(plaintext);
 
   const doc = await Credential.create({
     ownerId: new mongoose.Types.ObjectId(input.ownerId),
@@ -57,7 +54,6 @@ export async function saveCredential(input: SaveInput): Promise<CredentialMetada
     authMethod: input.authMethod,
     name: input.name,
     providerAccountId: input.providerAccountId,
-    encryptedDEK: encryptedKey,
     ciphertext,
     iv,
     authTag,
@@ -84,8 +80,7 @@ export async function decryptById(
     throw new ForbiddenError();
   }
 
-  const plaintextKey = await kmsDecrypt(doc.encryptedDEK);
-  const plaintext = aesDecrypt(doc.ciphertext, plaintextKey, doc.iv, doc.authTag);
+  const plaintext = await decryptPayload(doc.ciphertext, doc.iv, doc.authTag);
 
   const payload = JSON.parse(plaintext);
   payload.provider = doc.provider;
@@ -156,9 +151,7 @@ export async function updateCredential(
 
   if (input.payload) {
     const plaintext = JSON.stringify(input.payload);
-    const { plaintextKey, encryptedKey } = await kmsGenerateDEK();
-    const { ciphertext, iv, authTag } = aesEncrypt(plaintext, plaintextKey);
-    doc.encryptedDEK = encryptedKey;
+    const { ciphertext, iv, authTag } = await encryptPayload(plaintext);
     doc.ciphertext = ciphertext;
     doc.iv = iv;
     doc.authTag = authTag;

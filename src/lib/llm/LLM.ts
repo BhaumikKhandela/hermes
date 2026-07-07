@@ -2,12 +2,13 @@ import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { ChatCerebras } from "@langchain/cerebras";
 import { ChatOpenAI } from "@langchain/openai";
 
-type LLMType = "fireworks" | "cerebras" | "cerebras_llama" | "gpt4o_mini";;
+type LLMType = "fireworks" | "cerebras" | "cerebras_llama" | "gpt4o_mini" | "ollama_qwen";
 type LLMInstanceMap = {
   fireworks: ChatFireworks;
   cerebras: ChatCerebras;
   cerebras_llama: ChatCerebras;
   gpt4o_mini: ChatOpenAI;
+  ollama_qwen: ChatOpenAI;
 };
 
 export class LLM {
@@ -38,7 +39,7 @@ export class LLM {
           LLM.instances[type] = new ChatCerebras({
             model: "llama3.1-8b", 
             temperature: 0.7,
-            apiKey: process.env.FIRE_WORKS_API_KEY,
+            apiKey: process.env.CEREBRAS_API_KEY,
           }) as LLMInstanceMap[T];
           break;
         case "cerebras":
@@ -69,6 +70,16 @@ export class LLM {
             },
           }) as LLMInstanceMap[T];
 
+          break;
+        case "ollama_qwen":
+          LLM.instances[type] = new ChatOpenAI({
+            model: "qwen3:4b",
+            temperature: 0.7,
+            apiKey: "ollama",
+            configuration: {
+              baseURL: process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1",
+            },
+          }) as LLMInstanceMap[T];
           break;
           default:
           throw new Error(`Unsupported LLM type: ${type}`);
