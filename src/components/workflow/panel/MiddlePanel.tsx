@@ -56,7 +56,7 @@ export const MiddlePanel = ({
     [dispatch],
   );
 
-  const handleNodeClick = useCallback(
+  const handleNodeDoubleClick = useCallback(
     (_event: any, node: any) => {
       dispatch(setSelectedNode(node.id));
     },
@@ -113,8 +113,7 @@ export const MiddlePanel = ({
                 nodeTypes={nodeTypes}
                 onNodesChange={handleNodesChange}
                 onEdgesChange={handleEdgesChange}
-                onNodeClick={handleNodeClick}
-                onNodeDoubleClick={handleNodeClick}
+                onNodeDoubleClick={handleNodeDoubleClick}
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 fitView
