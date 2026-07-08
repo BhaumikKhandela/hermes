@@ -8,7 +8,7 @@ export function agentNodeConfig(props: nodeConfigProps) {
     referenceTo: [],
     position,
     data: {
-      label: "AI Agent",
+      label,
       icon: icon || "/icons/bot.png",
       sub: "Tools Agent",
       instructions: "",

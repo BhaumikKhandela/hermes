@@ -52,6 +52,9 @@ export const autoConnect = (nodes: any[]): any[] => {
         const references = targetNode.referenceTo || [];
         if (!references.includes(sourceNode.type)) return;
 
+        // --- SubAgent edges handled in section 3 below ---
+        if (targetNode.type === "subAgent" && targetNode.data?.parentLabel) return;
+
         const targetHandles =
           targetNode.constraints?.nodeHandles?.filter(
             (h: any) => norm(h.type) === "target",

@@ -84,6 +84,7 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
             data: nodeData,
             referenceTo: parentName ? [parentName] : [],
           });
+          Object.assign(newNode.data, nodeData);
         }
 
         newNode.referenceTo = parentName ? [parentName] : [];
