@@ -55,15 +55,19 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
             name: node.config?.name,
             nodeRegistry: node.config?.nodeRegistry,
             config: node.config?.config || {},
+            parentLabel: parentLabel || undefined,
           },
         );
+        if (parentLabel) {
+          newNode.data.parentLabel = parentLabel;
+        }
       } else {
         const resolvedIcon = node.config?.icon
           || (normalizedType === "model"
             ? resolveModelIcon(node.config?.label || node.config?.name || "")
             : "");
         const nodeData = { ...(node.config || {}) };
-        if (normalizedType === "subAgent" && parentLabel) {
+        if (parentLabel) {
           nodeData.parentLabel = parentLabel;
         }
         newNode = builder({

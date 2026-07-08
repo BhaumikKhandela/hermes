@@ -49,13 +49,25 @@ export const autoConnect = (nodes: any[], connections?: any[]): any[] => {
       nodes.forEach((targetNode) => {
         if (sourceNode.id === targetNode.id) return;
 
-        // --- referenceTo Check ---
-        // The connection is only considered if the target explicitly allows this source type
-        const references = targetNode.referenceTo || [];
-        if (!references.includes(sourceNode.type)) return;
+        // --- Dedicated parent-child matching for tools/models/subAgents ---
+        // With dedicated tool nodes, a tool/model/subAgent should only connect
+        // to its specific parent (matched by label), not to every agent.
+        if (
+          targetNode.type === "tool" ||
+          targetNode.type === "modelNode" ||
+          targetNode.type === "subAgent"
+        ) {
+          const parentLabel = targetNode.data?.parentLabel;
+          if (!parentLabel) return;
+          if (parentLabel !== sourceNode.data?.label) return;
 
-        // --- SubAgent edges handled in section 3 below ---
-        if (targetNode.type === "subAgent" && targetNode.data?.parentLabel) return;
+          // --- SubAgent edges from type-based matching are skipped — section 3 handles them ---
+          if (targetNode.type === "subAgent") return;
+        } else {
+          // --- referenceTo Check for non-child node types (e.g. inputNode→agent) ---
+          const references = targetNode.referenceTo || [];
+          if (!references.includes(sourceNode.type)) return;
+        }
 
         const targetHandles =
           targetNode.constraints?.nodeHandles?.filter(
