@@ -1,21 +1,16 @@
 import { Handle, Position } from "@xyflow/react";
-import {
-  Activity,
-  Cpu,
-  Layers,
-  Loader,
-  Loader2,
-  Plus,
-} from "lucide-react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
+import { Layers, Plus } from "lucide-react";
+import { NodeHoverActions } from "./NodeHoverActions";
 
-export function SubAgentNode({ data }: any) {
+export function SubAgentNode({ data, id }: any) {
   const { theme, resolvedTheme } = useTheme();
   const isDark =
     (theme === "system" ? resolvedTheme : theme) === "dark";
 
   return (
+    <NodeHoverActions id={id}>
     <div
       className={`
         relative min-w-[200px] group transition-all duration-300
@@ -126,5 +121,6 @@ export function SubAgentNode({ data }: any) {
         />
       </Handle>
     </div>
+    </NodeHoverActions>
   );
 }

@@ -2,15 +2,17 @@ import { Handle, Position } from "@xyflow/react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import { THEME_COLORS } from "./nodeThemes";
+import { NodeHoverActions } from "./NodeHoverActions";
 
 
-export function InputNode({ data }: any) {
+export function InputNode({ data, id }: any) {
   const { theme, resolvedTheme } = useTheme();
   const activeTheme = theme === "system" ? resolvedTheme : theme;
   const colors =
     activeTheme === "dark" ? THEME_COLORS.dark : THEME_COLORS.light;
 
   return (
+    <NodeHoverActions id={id}>
     <div className="flex flex-col items-center transition-colors duration-300">
       <div
         className={`relative rounded-md border ${colors.border} ${colors.bg}
@@ -53,5 +55,6 @@ export function InputNode({ data }: any) {
         {data.label}
       </div>
     </div>
+    </NodeHoverActions>
   );
 }

@@ -7,11 +7,14 @@ import { useTheme } from "next-themes";
 
 import { useEffect, useState } from "react";
 import { BrainCircuit, Plus } from "lucide-react";
+import { NodeHoverActions } from "./NodeHoverActions";
 
 export function ModelNode({
   data,
+  id,
 }: {
   data: { icon: string; label: string };
+  id: string;
 }) {
   const { theme, resolvedTheme } = useTheme();
   const activeTheme = theme === "system" ? resolvedTheme : theme;
@@ -31,6 +34,7 @@ export function ModelNode({
   }, [data?.label]);
 
   return (
+    <NodeHoverActions id={id}>
     <div className="flex flex-col items-center select-none transition-colors duration-300 cursor-pointer">
       {/* Zapier-Style Plus Handle at Top */}
       <Handle
@@ -88,5 +92,6 @@ export function ModelNode({
         {label}
       </div>
     </div>
+    </NodeHoverActions>
   );
 }

@@ -181,6 +181,14 @@ export const agentBuilderSlice = createSlice({
       });
       state.nodes.push(node);
     },
+
+    removeNode(state, action: PayloadAction<string>) {
+      const id = action.payload;
+      state.nodes = state.nodes.filter((n) => n.id !== id);
+      state.edges = state.edges.filter(
+        (e) => e.source !== id && e.target !== id,
+      );
+    },
   },
 });
 
@@ -195,6 +203,7 @@ export const {
   updateNodeCredential,
   addNodeFromPalette,
   setAgentConnections,
+  removeNode,
 } = agentBuilderSlice.actions;
 
 export default agentBuilderSlice.reducer;

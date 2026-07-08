@@ -5,8 +5,9 @@ import Image from "next/image";
 
 import { CpuIcon, PlusIcon } from "lucide-react";
 import { THEME } from "./nodeThemes";
+import { NodeHoverActions } from "./NodeHoverActions";
 
-export function AgentNode({ data }: any) {
+export function AgentNode({ data, id }: any) {
   const { theme, resolvedTheme } = useTheme();
   const isDark = (theme === "system" ? resolvedTheme : theme) === "dark";
 
@@ -22,6 +23,7 @@ export function AgentNode({ data }: any) {
   `;
 
   return (
+    <NodeHoverActions id={id}>
     <div
       style={{ borderColor: THEME.agentBorder }}
       className={`relative min-w-[240px] rounded-sm border transition-all duration-500
@@ -145,5 +147,6 @@ export function AgentNode({ data }: any) {
         </span>
       </div>
     </div>
+    </NodeHoverActions>
   );
 }

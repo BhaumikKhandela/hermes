@@ -5,6 +5,7 @@ import { PlusIcon, TriangleAlert } from "lucide-react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import { getRegistration } from "@/lib/workflow-tools/registry";
+import { NodeHoverActions } from "./NodeHoverActions";
 
 type ToolNodeData = {
   icon: string;
@@ -13,7 +14,7 @@ type ToolNodeData = {
   credentialId?: string | null;
 };
 
-export function ToolNode({ data }: { data: ToolNodeData }) {
+export function ToolNode({ data, id }: { data: ToolNodeData; id: string }) {
   const { theme, resolvedTheme } = useTheme();
   const activeTheme = theme === "system" ? resolvedTheme : theme;
   const isDark = activeTheme === "dark";
@@ -23,6 +24,7 @@ export function ToolNode({ data }: { data: ToolNodeData }) {
   const missingCredential = needsCredential && !data.credentialId;
 
   return (
+    <NodeHoverActions id={id}>
     <div
       className={`
         relative group flex items-center gap-3 px-4 py-2.5
@@ -100,5 +102,6 @@ export function ToolNode({ data }: { data: ToolNodeData }) {
         />
       </Handle>
     </div>
+    </NodeHoverActions>
   );
 }

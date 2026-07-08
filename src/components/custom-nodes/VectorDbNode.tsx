@@ -6,13 +6,15 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { CheckCircle2, Loader2, Plus, XCircle } from "lucide-react";
 import { THEME_COLORS } from "./nodeThemes";
+import { NodeHoverActions } from "./NodeHoverActions";
 
-export function VectorDbNode({ data }: any) {
+export function VectorDbNode({ data, id }: any) {
   const { theme, resolvedTheme } = useTheme();
   const t = theme === "system" ? resolvedTheme : theme;
   const c = t === "dark" ? THEME_COLORS.dark : THEME_COLORS.light;
 
   return (
+    <NodeHoverActions id={id}>
     <div className="flex flex-col items-center transition-colors duration-300">
       <div
         className={`relative rounded-md border ${c.border} ${c.bg} w-28 px-4 py-3 shadow-sm flex items-center justify-center`}
@@ -62,5 +64,6 @@ export function VectorDbNode({ data }: any) {
         {data.label}
       </div>
     </div>
+    </NodeHoverActions>
   );
 }

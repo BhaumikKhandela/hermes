@@ -19,6 +19,7 @@ import { ToolConfigForm } from "./ToolConfigForm";
 import { CredentialForm } from "./CredentialForm";
 import { ModelNodeConfig } from "./ModelNodeConfig";
 import { SubAgentConfigPanel } from "./SubAgentConfigPanel";
+import { AgentConfigPanel } from "./AgentConfigPanel";
 import {
   Combobox,
   ComboboxInput,
@@ -118,6 +119,74 @@ export function ToolConfigSheet() {
           <Separator />
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
             <SubAgentConfigPanel
+              nodeId={selectedNode.id}
+              instructions={
+                selectedNode.data?.config?.instructions ||
+                selectedNode.data?.instructions ||
+                ""
+              }
+              description={
+                selectedNode.data?.config?.description ||
+                selectedNode.data?.description ||
+                ""
+              }
+              onClose={handleClose}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  if (selectedNode.type === "agent") {
+    return (
+      <Sheet open onOpenChange={(open) => !open && handleClose()}>
+        <SheetContent side="right" className="w-80 sm:max-w-sm">
+          <SheetHeader>
+            <SheetTitle>
+              {selectedNode.data?.label || "Agent"}
+            </SheetTitle>
+            <SheetDescription>
+              Configure this agent's instructions and description
+            </SheetDescription>
+          </SheetHeader>
+          <Separator />
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            <AgentConfigPanel
+              nodeId={selectedNode.id}
+              instructions={
+                selectedNode.data?.config?.instructions ||
+                selectedNode.data?.instructions ||
+                ""
+              }
+              description={
+                selectedNode.data?.config?.description ||
+                selectedNode.data?.description ||
+                ""
+              }
+              onClose={handleClose}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  if (selectedNode.type === "inputNode") {
+    return (
+      <Sheet open onOpenChange={(open) => !open && handleClose()}>
+        <SheetContent side="right" className="w-80 sm:max-w-sm">
+          <SheetHeader>
+            <SheetTitle>
+              {selectedNode.data?.label || "Input"}
+            </SheetTitle>
+            <SheetDescription>
+              Configure the workflow input
+            </SheetDescription>
+          </SheetHeader>
+          <Separator />
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            <AgentConfigPanel
               nodeId={selectedNode.id}
               instructions={
                 selectedNode.data?.config?.instructions ||

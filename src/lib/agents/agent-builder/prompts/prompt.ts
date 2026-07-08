@@ -35,7 +35,7 @@ HOW TO EXECUTE
 
     2. **Sequential:** Agents run one after another. Add an \`agent_connections\` entry (see below). Use when one agent's output feeds the next.
 
-    3. **SubAgents as tools (orchestrator-workers):** A manager agent delegates work to subAgents. SubAgents are NOT parallel executors — they are compiled as **tools** that the manager calls dynamically at runtime (like `runAgent()` wrapped in a `DynamicStructuredTool`). The manager decides when to delegate, reviews outputs, and combines results. This is recursive: subAgents can themselves have subAgents (e.g., Engineering Manager → Backend Lead → API Agent).
+    3. **SubAgents as tools (orchestrator-workers):** A manager agent delegates work to subAgents. SubAgents are NOT parallel executors — they are compiled as **tools** that the manager calls dynamically at runtime (like \`runAgent()\` wrapped in a \`DynamicStructuredTool\`). The manager decides when to delegate, reviews outputs, and combines results. This is recursive: subAgents can themselves have subAgents (e.g., Engineering Manager → Backend Lead → API Agent).
 
     **Parallel pattern (siblings, all run at once):**
     \`\`\`json
