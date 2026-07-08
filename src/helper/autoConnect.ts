@@ -154,7 +154,7 @@ export const autoConnect = (nodes: any[], connections?: any[]): any[] => {
     });
   });
 
-  // 4. Sequential edges from agent_connections — animated blue with arrow markers
+  // 4. Sequential edges from agent_connections — solid blue with arrow markers
   if (connections && connections.length > 0) {
     const labelToId = new Map<string, string>();
     for (const n of nodes) {
@@ -178,7 +178,7 @@ export const autoConnect = (nodes: any[], connections?: any[]): any[] => {
         sourceHandle: "out",
         target: targetId,
         targetHandle: "in",
-        animated: true,
+        animated: false,
         style: { stroke: "#3b82f6", strokeWidth: 2 },
         markerEnd: { type: MarkerType.ArrowClosed, color: "#3b82f6" },
       });
