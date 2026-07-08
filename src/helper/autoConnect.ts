@@ -3,6 +3,11 @@ import { MarkerType } from "@xyflow/react";
 export const autoConnect = (nodes: any[], connections?: any[]): any[] => {
   const newEdges: any[] = [];
 
+  console.log("[autoConnect] START nodes=", nodes.length, "connections=", connections?.length);
+  for (const n of nodes) {
+    console.log(`[autoConnect] node ${n.id} type=${n.type} label="${n.data?.label}" parentLabel="${n.data?.parentLabel}"`);
+  }
+
   const norm = (v: any) =>
     typeof v === "string"
       ? v
@@ -52,17 +57,31 @@ export const autoConnect = (nodes: any[], connections?: any[]): any[] => {
         // --- Dedicated parent-child matching for tools/models/subAgents ---
         // With dedicated tool nodes, a tool/model/subAgent should only connect
         // to its specific parent (matched by label), not to every agent.
-        if (
+        const isChildType =
           targetNode.type === "tool" ||
           targetNode.type === "modelNode" ||
-          targetNode.type === "subAgent"
-        ) {
+          targetNode.type === "subAgent";
+
+        if (isChildType) {
           const parentLabel = targetNode.data?.parentLabel;
-          if (!parentLabel) return;
-          if (parentLabel !== sourceNode.data?.label) return;
+          if (!parentLabel) {
+            console.log(`[autoConnect] SKIP: ${sourceNode.id} -> ${targetNode.id} no parentLabel on target`);
+            return;
+          }
+          if (parentLabel !== sourceNode.data?.label) {
+            if (targetNode.type === "modelNode" || targetNode.type === "tool") {
+              console.log(`[autoConnect] PARENT_MISMATCH: ${sourceNode.id}("${sourceNode.data?.label}") -> ${targetNode.id}("${targetNode.data?.label}") target parentLabel="${parentLabel}"`);
+            }
+            return;
+          }
+
+          console.log(`[autoConnect] PARENT_MATCH: ${sourceNode.id}(${sourceNode.type} "${sourceNode.data?.label}") -> ${targetNode.id}(${targetNode.type} "${targetNode.data?.label}")`);
 
           // --- SubAgent edges from type-based matching are skipped — section 3 handles them ---
-          if (targetNode.type === "subAgent") return;
+          if (targetNode.type === "subAgent") {
+            console.log(`[autoConnect] SKIP subAgent edge to section 3: ${sourceNode.id} -> ${targetNode.id}`);
+            return;
+          }
         } else {
           // --- referenceTo Check for non-child node types (e.g. inputNode→agent) ---
           const references = targetNode.referenceTo || [];
@@ -195,6 +214,13 @@ export const autoConnect = (nodes: any[], connections?: any[]): any[] => {
         markerEnd: { type: MarkerType.ArrowClosed, color: "#3b82f6" },
       });
     }
+  }
+
+  console.log(`[autoConnect] DONE. Created ${newEdges.length} edges`);
+  for (const e of newEdges) {
+    const src = nodes.find((n: any) => n.id === e.source);
+    const tgt = nodes.find((n: any) => n.id === e.target);
+    console.log(`[autoConnect] edge ${e.id}: ${src?.data?.label || e.source}(${src?.type}) -> ${tgt?.data?.label || e.target}(${tgt?.type}) animated=${e.animated} style=${JSON.stringify(e.style)}`);
   }
 
   return newEdges;
