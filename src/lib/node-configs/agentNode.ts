@@ -34,6 +34,7 @@ export function agentNodeConfig(props: nodeConfigProps) {
           LinkTo: [
             { nodeName: "tool", handlePosition: "top" },
             { nodeName: "modelNode", handlePosition: "top" },
+            { nodeName: "subAgent", handlePosition: "top" },
           ],
         },
       ],

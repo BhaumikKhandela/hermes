@@ -122,5 +122,32 @@ export const autoConnect = (nodes: any[]): any[] => {
     });
   });
 
+  // 3. SubAgent edges — animated dashed orange for manager→subAgent
+  nodes.forEach((targetNode) => {
+    const parentLabel = targetNode.data?.parentLabel;
+    if (!parentLabel || targetNode.type !== "subAgent") return;
+
+    const sourceNode = nodes.find(
+      (n: any) => n.type === "agent" && n.data?.label === parentLabel,
+    );
+    if (!sourceNode) return;
+
+    const exists = newEdges.some(
+      (e: any) =>
+        e.source === sourceNode.id && e.target === targetNode.id,
+    );
+    if (exists) return;
+
+    newEdges.push({
+      id: `e-${sourceNode.id}-${targetNode.id}-subagent`,
+      source: sourceNode.id,
+      sourceHandle: "bottom",
+      target: targetNode.id,
+      targetHandle: "in",
+      animated: true,
+      style: { strokeDasharray: "6 6", stroke: "#f97316" },
+    });
+  });
+
   return newEdges;
 };

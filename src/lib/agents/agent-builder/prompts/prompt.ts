@@ -29,164 +29,173 @@ HOW TO EXECUTE
 3. **Work through todos** — Update each task's status as you go.
  4. **Write agent tree JSON** — Build the agent tree in the node-tree format (not flat plan format). Each agent from the plan becomes an agent node with its tools as child tool nodes. **All agents for a workflow go under a single \`inputNode\`**, not separate inputNodes.
 
-   **Two execution patterns:**
-   - **Parallel (default):** All sibling agents under \`inputNode\` run at the same time. The input node connects to every agent automatically. Use this when agents work independently on the same input.
-   - **Sequential:** Agents run one after another. Add an \`agent_connections\` entry to the JSON root array to define the chain. Use this when an agent's output is needed by the next agent.
+    **Three execution patterns:**
 
-   **Parallel pattern (no \`agent_connections\` needed):**
-   \`\`\`json
-   [
-     {
-       "node_name": "inputNode",
-       "config": { "label": "Input", "name": "Input", "position": { "x": 50, "y": 250 } },
-       "children": [
-         {
-           "node_name": "agent",
-           "config": {
-             "label": "<agent 1 name>",
-             "name": "<agent 1 name>",
-             "instructions": "<instructions from plan>",
-             "model": "<model from plan>",
-             "position": { "x": 350, "y": 150 }
-           },
-           "children": [
-             { "node_name": "tool", "config": { "label": "<tool 1>", "name": "<tool 1>", "position": { "x": 650, "y": 50 } } },
-             { "node_name": "tool", "config": { "label": "<tool 2>", "name": "<tool 2>", "position": { "x": 650, "y": 150 } } }
-           ]
-         },
-         {
-           "node_name": "agent",
-           "config": {
-             "label": "<agent 2 name>",
-             "name": "<agent 2 name>",
-             "instructions": "<instructions from plan>",
-             "model": "<model from plan>",
-             "position": { "x": 350, "y": 450 }
-           },
-           "children": [
-             { "node_name": "tool", "config": { "label": "<tool 1>", "name": "<tool 1>", "position": { "x": 650, "y": 350 } } }
-           ]
-         }
-       ]
-     }
-   ]
-   \`\`\`
+    1. **Parallel (default):** All sibling agents under \`inputNode\` run simultaneously. The input node connects to every agent automatically (solid edges). Use for independent agents that process the same input.
 
-   **Sequential pattern (add \`agent_connections\` at root level):**
-   \`\`\`json
-   [
-     {
-       "node_name": "inputNode",
-       "config": { "label": "Input", "name": "Input", "position": { "x": 50, "y": 250 } },
-       "children": [
-         {
-           "node_name": "agent",
-           "config": {
-             "label": "Schema Analyzer",
-             "name": "Schema Analyzer",
-             "instructions": "Analyze the database schema and identify all tables and relationships.",
-             "model": "OpenAI",
-             "position": { "x": 350, "y": 150 }
-           },
-           "children": [
-             { "node_name": "tool", "config": { "label": "readFile", "name": "readFile", "position": { "x": 650, "y": 50 } } },
-             { "node_name": "tool", "config": { "label": "writeFile", "name": "writeFile", "position": { "x": 650, "y": 150 } } }
-           ]
-         },
-         {
-           "node_name": "agent",
-           "config": {
-             "label": "Schema Mapper",
-             "name": "Schema Mapper",
-             "instructions": "Read the analysis from Schema Analyzer and create an ER diagram.",
-             "model": "OpenAI",
-             "position": { "x": 350, "y": 450 }
-           },
-           "children": [
-             { "node_name": "tool", "config": { "label": "readFile", "name": "readFile", "position": { "x": 650, "y": 350 } } },
-             { "node_name": "tool", "config": { "label": "writeFile", "name": "writeFile", "position": { "x": 650, "y": 450 } } }
-           ]
-         },
-         {
-           "node_name": "agent",
-           "config": {
-             "label": "Script Generator",
-             "name": "Script Generator",
-             "instructions": "Read the ER diagram from Schema Mapper and generate SQL migration scripts.",
-             "model": "OpenAI",
-             "position": { "x": 350, "y": 750 }
-           },
-           "children": [
-             { "node_name": "tool", "config": { "label": "writeFile", "name": "writeFile", "position": { "x": 650, "y": 650 } } },
-             { "node_name": "tool", "config": { "label": "executeCommand", "name": "executeCommand", "position": { "x": 650, "y": 750 } } }
-           ]
-         }
-       ]
-     },
-     {
-       "agent_connections": [
-         { "from": "Schema Analyzer", "to": "Schema Mapper" },
-         { "from": "Schema Mapper", "to": "Script Generator" }
-       ]
-     }
-   ]
-   \`\`\`
+    2. **Sequential:** Agents run one after another. Add an \`agent_connections\` entry (see below). Use when one agent's output feeds the next.
 
-   The \`agent_connections\` entries reference agents by their \`label\`. Choose either pattern based on the plan — parallel for independent agents, sequential when order matters.
+    3. **SubAgents as tools (orchestrator-workers):** A manager agent delegates work to subAgents. SubAgents are NOT parallel executors — they are compiled as **tools** that the manager calls dynamically at runtime (like `runAgent()` wrapped in a `DynamicStructuredTool`). The manager decides when to delegate, reviews outputs, and combines results. This is recursive: subAgents can themselves have subAgents (e.g., Engineering Manager → Backend Lead → API Agent).
 
-   If the plan specifies **orchestrator-workers** (a manager agent that delegates to parallel worker agents), use this structure instead — the root agent is the orchestrator and each worker is a \`subAgent\` nested under it, each with its own model and tools:
+    **Parallel pattern (siblings, all run at once):**
+    \`\`\`json
+    [
+      {
+        "node_name": "inputNode",
+        "config": { "label": "Input", "name": "Input", "position": { "x": 50, "y": 250 } },
+        "children": [
+          {
+            "node_name": "agent",
+            "config": {
+              "label": "<agent 1 name>",
+              "name": "<agent 1 name>",
+              "instructions": "<instructions from plan>",
+              "model": "<model from plan>",
+              "position": { "x": 350, "y": 150 }
+            },
+            "children": [
+              { "node_name": "tool", "config": { "label": "<tool 1>", "name": "<tool 1>", "position": { "x": 650, "y": 50 } } },
+              { "node_name": "tool", "config": { "label": "<tool 2>", "name": "<tool 2>", "position": { "x": 650, "y": 150 } } }
+            ]
+          },
+          {
+            "node_name": "agent",
+            "config": {
+              "label": "<agent 2 name>",
+              "name": "<agent 2 name>",
+              "instructions": "<instructions from plan>",
+              "model": "<model from plan>",
+              "position": { "x": 350, "y": 450 }
+            },
+            "children": [
+              { "node_name": "tool", "config": { "label": "<tool 1>", "name": "<tool 1>", "position": { "x": 650, "y": 350 } } }
+            ]
+          }
+        ]
+      }
+    ]
+    \`\`\`
 
-   \`\`\`json
-   [
-     {
-       "node_name": "inputNode",
-       "config": { "label": "Input", "name": "Input", "position": { "x": 50, "y": 250 } },
-       "children": [
-         {
-           "node_name": "agent",
-           "config": {
-             "label": "Manager",
-             "name": "Manager",
-             "instructions": "You are the orchestrator. Receive the topic, spawn each worker agent, collect their outputs, and assemble the final result.",
-             "model": "OpenAI",
-             "position": { "x": 350, "y": 150 }
-           },
-           "children": [
-             { "node_name": "modelNode", "config": { "label": "OpenAI", "name": "OpenAI", "model": "OpenAI", "position": { "x": 650, "y": 50 } } },
-             {
-               "node_name": "subAgent",
-               "config": {
-                 "label": "Researcher",
-                 "instructions": "Search and scrape sources, return findings as structured data.",
-                 "model": "OpenAI",
-                 "position": { "x": 350, "y": 450 }
-               },
-               "children": [
-                 { "node_name": "modelNode", "config": { "label": "OpenAI", "name": "OpenAI", "model": "OpenAI", "position": { "x": 650, "y": 350 } } },
-                 { "node_name": "tool", "config": { "label": "search", "name": "search", "position": { "x": 650, "y": 450 } } }
-               ]
-             },
-             {
-               "node_name": "subAgent",
-               "config": {
-                 "label": "Writer",
-                 "instructions": "Read research data and write a markdown article.",
-                 "model": "OpenAI",
-                 "position": { "x": 350, "y": 700 }
-               },
-               "children": [
-                 { "node_name": "modelNode", "config": { "label": "OpenAI", "name": "OpenAI", "model": "OpenAI", "position": { "x": 650, "y": 600 } } },
-                 { "node_name": "tool", "config": { "label": "writeFile", "name": "writeFile", "position": { "x": 650, "y": 700 } } }
-               ]
-             }
-           ]
-         }
-       ]
-     }
-   ]
-   \`\`\`
+    **Sequential pattern (add \`agent_connections\` at root level):**
+    \`\`\`json
+    [
+      {
+        "node_name": "inputNode",
+        "config": { "label": "Input", "name": "Input", "position": { "x": 50, "y": 250 } },
+        "children": [
+          {
+            "node_name": "agent",
+            "config": {
+              "label": "Schema Analyzer",
+              "name": "Schema Analyzer",
+              "instructions": "Analyze the database schema and identify all tables and relationships.",
+              "model": "OpenAI",
+              "position": { "x": 350, "y": 150 }
+            },
+            "children": [
+              { "node_name": "tool", "config": { "label": "readFile", "name": "readFile", "position": { "x": 650, "y": 50 } } },
+              { "node_name": "tool", "config": { "label": "writeFile", "name": "writeFile", "position": { "x": 650, "y": 150 } } }
+            ]
+          },
+          {
+            "node_name": "agent",
+            "config": {
+              "label": "Schema Mapper",
+              "name": "Schema Mapper",
+              "instructions": "Read the analysis from Schema Analyzer and create an ER diagram.",
+              "model": "OpenAI",
+              "position": { "x": 350, "y": 450 }
+            },
+            "children": [
+              { "node_name": "tool", "config": { "label": "readFile", "name": "readFile", "position": { "x": 650, "y": 350 } } },
+              { "node_name": "tool", "config": { "label": "writeFile", "name": "writeFile", "position": { "x": 650, "y": 450 } } }
+            ]
+          },
+          {
+            "node_name": "agent",
+            "config": {
+              "label": "Script Generator",
+              "name": "Script Generator",
+              "instructions": "Read the ER diagram from Schema Mapper and generate SQL migration scripts.",
+              "model": "OpenAI",
+              "position": { "x": 350, "y": 750 }
+            },
+            "children": [
+              { "node_name": "tool", "config": { "label": "writeFile", "name": "writeFile", "position": { "x": 650, "y": 650 } } },
+              { "node_name": "tool", "config": { "label": "executeCommand", "name": "executeCommand", "position": { "x": 650, "y": 750 } } }
+            ]
+          }
+        ]
+      },
+      {
+        "agent_connections": [
+          { "from": "Schema Analyzer", "to": "Schema Mapper" },
+          { "from": "Schema Mapper", "to": "Script Generator" }
+        ]
+      }
+    ]
+    \`\`\`
 
-   **Every node's config MUST include a \`position\` object with \`x\` and \`y\` values.** Position determines where the node appears in the visual editor. Spread nodes with sufficient spacing: inputNode at x=50, agents staggered vertically at x=350 (y spacing ~300 between agents), tools at x=650 with y matching their parent agent's range.
+    The \`agent_connections\` entries reference agents by their \`label\`.
+
+    **SubAgents-as-tools pattern (manager uses subAgents as tools it calls dynamically):**
+
+    CRITICAL: SubAgents are NOT parallel siblings. They are compiled as tools the manager calls via \`{ request: string }\`. The manager's instructions must reference delegating to subAgents by name. SubAgents can recursively have their own subAgents.
+
+    \`\`\`json
+    [
+      {
+        "node_name": "inputNode",
+        "config": { "label": "Input", "name": "Input", "position": { "x": 50, "y": 250 } },
+        "children": [
+          {
+            "node_name": "agent",
+            "config": {
+              "label": "Manager",
+              "name": "Manager",
+              "instructions": "You are the orchestrator. Receive the topic, delegate research to 'Researcher', writing to 'Writer', collect their outputs, and assemble the final result.",
+              "model": "OpenAI",
+              "position": { "x": 350, "y": 150 }
+            },
+            "children": [
+              { "node_name": "modelNode", "config": { "label": "OpenAI", "name": "OpenAI", "model": "OpenAI", "position": { "x": 650, "y": 50 } } },
+              {
+                "node_name": "subAgent",
+                "config": {
+                  "label": "Researcher",
+                  "instructions": "Search and scrape sources, return findings as structured data.",
+                  "model": "OpenAI",
+                  "position": { "x": 650, "y": 450 }
+                },
+                "children": [
+                  { "node_name": "modelNode", "config": { "label": "OpenAI", "name": "OpenAI", "model": "OpenAI", "position": { "x": 950, "y": 350 } } },
+                  { "node_name": "tool", "config": { "label": "search", "name": "search", "position": { "x": 950, "y": 450 } } }
+                ]
+              },
+              {
+                "node_name": "subAgent",
+                "config": {
+                  "label": "Writer",
+                  "instructions": "Read research data and write a markdown article.",
+                  "model": "OpenAI",
+                  "position": { "x": 650, "y": 700 }
+                },
+                "children": [
+                  { "node_name": "modelNode", "config": { "label": "OpenAI", "name": "OpenAI", "model": "OpenAI", "position": { "x": 950, "y": 600 } } },
+                  { "node_name": "tool", "config": { "label": "writeFile", "name": "writeFile", "position": { "x": 950, "y": 700 } } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+    \`\`\`
+
+    **Every node's config MUST include a \`position\` object with \`x\` and \`y\` values.** Position determines where the node appears in the visual editor. Use these spacing guidelines:
+
+    - **Parallel/Sequential agents** (siblings under inputNode): inputNode at x=50, agents staggered vertically at x=350 (y spacing ~300), tools at x=650 aligned with their parent.
+    - **SubAgents** (under a manager): manager at x=350, subAgents at x=650 (offset +300 right to show hierarchy), subAgent's own tools at x=950. Each nesting level adds +300 to x. Vertically stagger with ~250px y spacing.
 
    Write this JSON to \`working-agent-folder/agent-tree-{projectId}.json\` using \`write_file\`. Do NOT use the plan's \`agents\` array format — use the node-tree format shown above.
 
@@ -216,7 +225,7 @@ Use \`think_tool\` to reflect on progress and validate your agent tree matches t
 **CRITICAL — Validate tool assignments:**
 The plan may occasionally list tools in the \`requiredTools\` array that are NOT assigned to any specific agent. If an agent's instructions reference a tool (e.g., "save to a file", "read the file", "use the model"), that tool MUST be in that agent's \`children\` (tool nodes), even if the plan's per-agent \`tools\` array omitted it. Scan each agent's instructions and ensure all referenced tools are present in the tree.
 
-For **orchestrator-workers** trees, check BOTH the root agent's tools AND each \`subAgent\`'s tools independently using the same rule.
+For **orchestrator-workers** trees, check recursively: the manager agent's tools AND each \`subAgent\`'s tools independently using the same rule. A subAgent may itself have subAgents — validate every nesting level.
 
 **Your available tools:**
 - All filesystem tools (read_file, write_file, edit_file, ls, grep, glob)
