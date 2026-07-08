@@ -19,7 +19,6 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
   };
 
   const newNodes: any[] = [];
-  const nodeTracker = new Map<string, any>();
 
   let idCount = startId;
 
@@ -37,61 +36,50 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
     const builder = nodeBuilderFunc[normalizedType];
 
     if (builder) {
-      const uniqueKey = `${normalizedType}-${node.config?.label || node.config?.name || ""}-${node.config?.icon || ""}`;
+      const id = `n${idCount++}`;
 
-      let existingNode = nodeTracker.get(uniqueKey);
+      let newNode;
 
-      if (existingNode) {
-        if (parentName && !existingNode.referenceTo.includes(parentName)) {
-          existingNode.referenceTo.push(parentName);
-        }
-      } else {
-        const id = `n${idCount++}`;
-
-        let newNode;
-
-        if (normalizedType === "tool") {
-          const toolIcon = node.config?.icon
-            || resolveToolIcon(node.config?.nodeRegistry || node.config?.name || "");
-          newNode = builder(
-            {
-              id,
-              label: node.config?.label,
-              icon: toolIcon,
-              position: node.config?.position,
-              referenceTo: parentName ? [parentName] : [],
-            },
-            {
-              name: node.config?.name,
-              nodeRegistry: node.config?.nodeRegistry,
-              config: node.config?.config || {},
-            },
-          );
-        } else {
-          const resolvedIcon = node.config?.icon
-            || (normalizedType === "model"
-              ? resolveModelIcon(node.config?.label || node.config?.name || "")
-              : "");
-          const nodeData = { ...(node.config || {}) };
-          if (normalizedType === "subAgent" && parentLabel) {
-            nodeData.parentLabel = parentLabel;
-          }
-          newNode = builder({
+      if (normalizedType === "tool") {
+        const toolIcon = node.config?.icon
+          || resolveToolIcon(node.config?.nodeRegistry || node.config?.name || "");
+        newNode = builder(
+          {
             id,
             label: node.config?.label,
-            icon: resolvedIcon,
+            icon: toolIcon,
             position: node.config?.position,
-            data: nodeData,
             referenceTo: parentName ? [parentName] : [],
-          });
-          Object.assign(newNode.data, nodeData);
+          },
+          {
+            name: node.config?.name,
+            nodeRegistry: node.config?.nodeRegistry,
+            config: node.config?.config || {},
+          },
+        );
+      } else {
+        const resolvedIcon = node.config?.icon
+          || (normalizedType === "model"
+            ? resolveModelIcon(node.config?.label || node.config?.name || "")
+            : "");
+        const nodeData = { ...(node.config || {}) };
+        if (normalizedType === "subAgent" && parentLabel) {
+          nodeData.parentLabel = parentLabel;
         }
-
-        newNode.referenceTo = parentName ? [parentName] : [];
-
-        newNodes.push(newNode);
-        nodeTracker.set(uniqueKey, newNode);
+        newNode = builder({
+          id,
+          label: node.config?.label,
+          icon: resolvedIcon,
+          position: node.config?.position,
+          data: nodeData,
+          referenceTo: parentName ? [parentName] : [],
+        });
+        Object.assign(newNode.data, nodeData);
       }
+
+      newNode.referenceTo = parentName ? [parentName] : [];
+
+      newNodes.push(newNode);
     }
 
     if (node.children && Array.isArray(node.children)) {
