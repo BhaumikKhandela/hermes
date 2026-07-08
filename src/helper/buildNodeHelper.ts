@@ -72,7 +72,7 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
             || (normalizedType === "model"
               ? resolveModelIcon(node.config?.label || node.config?.name || "")
               : "");
-          const nodeData = node.config || {};
+          const nodeData = { ...(node.config || {}) };
           if (normalizedType === "subAgent" && parentLabel) {
             nodeData.parentLabel = parentLabel;
           }

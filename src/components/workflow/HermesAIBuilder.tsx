@@ -7,7 +7,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { authClient } from "@/lib/auth/auth-client";
 import { MiddlePanel } from "./panel/MiddlePanel";
 import { useDispatch, useSelector } from "react-redux";
-import { applyDBNodes, buildNodes } from "@/stores/agentBuilderSlice";
+import { applyDBNodes, buildNodes, setAgentConnections } from "@/stores/agentBuilderSlice";
 import { socket } from "@/socket";
 import { AppDispatch, RootState } from "@/stores";
 import { fetchAgentTree } from "@/stores/agentTreeSlice";
@@ -44,6 +44,10 @@ export default function HermesAIBuilder() {
       .then((data) => {
         dispatch(buildNodes(data.agentTree));
         dispatch(applyDBNodes(data.nodes));
+        const connections = Array.isArray(data.agentTree)
+          ? (data.agentTree.find((n: any) => n.agent_connections)?.agent_connections || [])
+          : [];
+        dispatch(setAgentConnections(connections));
       })
       .catch((error) => {
         console.error("Failed to fetch agent tree:", error);

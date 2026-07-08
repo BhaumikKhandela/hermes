@@ -1,4 +1,6 @@
-export const autoConnect = (nodes: any[]): any[] => {
+import { MarkerType } from "@xyflow/react";
+
+export const autoConnect = (nodes: any[], connections?: any[]): any[] => {
   const newEdges: any[] = [];
 
   const norm = (v: any) =>
@@ -100,7 +102,7 @@ export const autoConnect = (nodes: any[]): any[] => {
 
             if (!exists) {
               const isTool =
-                targetNode.type === "tool" || targetNode.category === "tool";
+                targetNode.type === "tool" || targetNode.category === "tool" || targetNode.type === "modelNode";
 
               newEdges.push({
                 id: `e-${sourceNode.id}-${sourceHandleUiId}-${targetNode.id}-${targetHandleUiId}-${Date.now()}`,
@@ -144,13 +146,44 @@ export const autoConnect = (nodes: any[]): any[] => {
     newEdges.push({
       id: `e-${sourceNode.id}-${targetNode.id}-subagent`,
       source: sourceNode.id,
-      sourceHandle: "bottom",
+      sourceHandle: "tools",
       target: targetNode.id,
       targetHandle: "in",
       animated: true,
       style: { strokeDasharray: "6 6", stroke: "#f97316" },
     });
   });
+
+  // 4. Sequential edges from agent_connections — animated blue with arrow markers
+  if (connections && connections.length > 0) {
+    const labelToId = new Map<string, string>();
+    for (const n of nodes) {
+      if (n.type === "agent" && n.data?.label) {
+        labelToId.set(n.data.label as string, n.id);
+      }
+    }
+    for (const conn of connections) {
+      const sourceId = labelToId.get(conn.from);
+      const targetId = labelToId.get(conn.to);
+      if (!sourceId || !targetId) continue;
+
+      const exists = newEdges.some(
+        (e: any) => e.source === sourceId && e.target === targetId,
+      );
+      if (exists) continue;
+
+      newEdges.push({
+        id: `e-${sourceId}-${targetId}-seq`,
+        source: sourceId,
+        sourceHandle: "out",
+        target: targetId,
+        targetHandle: "in",
+        animated: true,
+        style: { stroke: "#3b82f6", strokeWidth: 2 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#3b82f6" },
+      });
+    }
+  }
 
   return newEdges;
 };

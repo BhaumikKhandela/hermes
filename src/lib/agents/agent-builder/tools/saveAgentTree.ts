@@ -141,7 +141,7 @@ export const saveAgentTreeTool = tool(
         userId,
         agent_edges,
         agent_nodes: nodes,
-        agentTree: Array.isArray(raw) ? raw.filter((n: any) => !n.agent_connections) : raw,
+        agentTree: raw,
         agentInstruction,
       });
 
