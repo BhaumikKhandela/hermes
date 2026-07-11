@@ -22,11 +22,11 @@ export function tryConvertNotionJsonToVisual(json: string): ConversionResult {
   try {
     parsed = JSON.parse(json);
   } catch {
-    return { success: false, unsupportedFeatures: ["Invalid JSON"] };
+    return { success: false, unsupportedFeatures: ["Invalid JSON"], partialBlocks: [] };
   }
 
   if (!Array.isArray(parsed)) {
-    return { success: false, unsupportedFeatures: ["Expected an array of blocks"] };
+    return { success: false, unsupportedFeatures: ["Expected an array of blocks"], partialBlocks: [] };
   }
 
   const unsupportedFeatures: string[] = [];
@@ -38,7 +38,7 @@ export function tryConvertNotionJsonToVisual(json: string): ConversionResult {
   }
 
   if (unsupportedFeatures.length > 0) {
-    return { success: false, unsupportedFeatures: [...new Set(unsupportedFeatures)] };
+    return { success: false, unsupportedFeatures: [...new Set(unsupportedFeatures)], partialBlocks: blocks };
   }
 
   return { success: true, blocks };

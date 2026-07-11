@@ -176,6 +176,9 @@ export async function handleAppend(
   const notion = createNotionClient(config);
 
   if (content.mode === "markdown") {
+    if (position.type === "after_block") {
+      throw new Error("Markdown append does not support after_block positioning");
+    }
     const body: Record<string, any> = {
       markdown: content.markdown,
     };

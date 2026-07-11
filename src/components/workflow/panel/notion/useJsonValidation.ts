@@ -1,16 +1,73 @@
 import { useMemo } from "react";
 
-const EXPRESSION_PATTERN = /\{\{.*?\}\}/;
-
-function containsExpression(value: string): boolean {
-  return EXPRESSION_PATTERN.test(value);
-}
-
 export type JsonValidationResult = {
   isValid: boolean;
   error: string | null;
   isExpression: boolean;
 };
+
+function substituteExpressionsFromJson(input: string): {
+  result: string;
+  hasExpression: boolean;
+  unclosedExpression: boolean;
+} {
+  let output = "";
+  let inString = false;
+  let escaped = false;
+  let exprOpenAt = -1;
+  let hasExpression = false;
+  let i = 0;
+
+  while (i < input.length) {
+    const ch = input[i];
+
+    if (escaped) {
+      escaped = false;
+      if (exprOpenAt === -1) output += ch;
+      i++;
+      continue;
+    }
+
+    if (ch === "\\" && inString) {
+      escaped = true;
+      if (exprOpenAt === -1) output += ch;
+      i++;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = !inString;
+      if (exprOpenAt === -1) output += ch;
+      i++;
+      continue;
+    }
+
+    if (!inString && exprOpenAt === -1 && ch === "{" && i + 1 < input.length && input[i + 1] === "{") {
+      exprOpenAt = output.length;
+      i += 2;
+      continue;
+    }
+
+    if (!inString && exprOpenAt !== -1 && ch === "}" && i + 1 < input.length && input[i + 1] === "}") {
+      output = output.slice(0, exprOpenAt) + "null";
+      exprOpenAt = -1;
+      hasExpression = true;
+      i += 2;
+      continue;
+    }
+
+    if (exprOpenAt === -1) {
+      output += ch;
+    }
+    i++;
+  }
+
+  return {
+    result: output,
+    hasExpression,
+    unclosedExpression: exprOpenAt !== -1,
+  };
+}
 
 export function useJsonValidation(value: string): JsonValidationResult {
   return useMemo(() => {
@@ -20,13 +77,20 @@ export function useJsonValidation(value: string): JsonValidationResult {
       return { isValid: true, error: null, isExpression: false };
     }
 
-    if (containsExpression(trimmed)) {
-      return { isValid: true, error: null, isExpression: true };
+    const { result, hasExpression, unclosedExpression } =
+      substituteExpressionsFromJson(trimmed);
+
+    if (unclosedExpression) {
+      return {
+        isValid: false,
+        error: "Unclosed expression {{ ...",
+        isExpression: true,
+      };
     }
 
     try {
-      JSON.parse(trimmed);
-      return { isValid: true, error: null, isExpression: false };
+      JSON.parse(result);
+      return { isValid: true, error: null, isExpression: hasExpression };
     } catch (e) {
       const err = e as SyntaxError;
       const match = err.message.match(/position\s+(\d+)/);
@@ -38,13 +102,13 @@ export function useJsonValidation(value: string): JsonValidationResult {
         return {
           isValid: false,
           error: `Invalid JSON at line ${lineNum}, column ${colNum}`,
-          isExpression: false,
+          isExpression: hasExpression,
         };
       }
       return {
         isValid: false,
         error: "Invalid JSON",
-        isExpression: false,
+        isExpression: hasExpression,
       };
     }
   }, [value]);

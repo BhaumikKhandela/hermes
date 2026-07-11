@@ -9,16 +9,19 @@ export const blockRegistry: Record<string, BlockDefinition> = {
     type: "paragraph",
     label: "Paragraph",
     icon: "Type",
+    canHaveChildren: true,
     createDefault: () => ({
       id: crypto.randomUUID(),
       type: "paragraph",
       richText: richText(""),
+      children: [],
     }),
     toNotionBlock: (block) => ({
       object: "block",
       type: "paragraph",
       paragraph: {
         rich_text: block.richText.map(richTextToNotion),
+        children: block.children?.map((c) => blockRegistry[c.type]?.toNotionBlock(c)).filter(Boolean),
       },
     }),
   },
@@ -27,6 +30,7 @@ export const blockRegistry: Record<string, BlockDefinition> = {
     type: "heading_1",
     label: "Heading 1",
     icon: "Heading1",
+    canHaveChildren: false,
     createDefault: () => ({
       id: crypto.randomUUID(),
       type: "heading_1",
@@ -45,6 +49,7 @@ export const blockRegistry: Record<string, BlockDefinition> = {
     type: "heading_2",
     label: "Heading 2",
     icon: "Heading2",
+    canHaveChildren: false,
     createDefault: () => ({
       id: crypto.randomUUID(),
       type: "heading_2",
@@ -63,6 +68,7 @@ export const blockRegistry: Record<string, BlockDefinition> = {
     type: "heading_3",
     label: "Heading 3",
     icon: "Heading3",
+    canHaveChildren: false,
     createDefault: () => ({
       id: crypto.randomUUID(),
       type: "heading_3",
@@ -81,6 +87,7 @@ export const blockRegistry: Record<string, BlockDefinition> = {
     type: "bulleted_list_item",
     label: "Bulleted List",
     icon: "List",
+    canHaveChildren: true,
     createDefault: () => ({
       id: crypto.randomUUID(),
       type: "bulleted_list_item",
@@ -101,6 +108,7 @@ export const blockRegistry: Record<string, BlockDefinition> = {
     type: "numbered_list_item",
     label: "Numbered List",
     icon: "ListOrdered",
+    canHaveChildren: true,
     createDefault: () => ({
       id: crypto.randomUUID(),
       type: "numbered_list_item",
@@ -121,11 +129,13 @@ export const blockRegistry: Record<string, BlockDefinition> = {
     type: "to_do",
     label: "To-do",
     icon: "CheckSquare",
+    canHaveChildren: true,
     createDefault: () => ({
       id: crypto.randomUUID(),
       type: "to_do",
       richText: richText(""),
       checked: false,
+      children: [],
     }),
     toNotionBlock: (block) => ({
       object: "block",
@@ -133,6 +143,7 @@ export const blockRegistry: Record<string, BlockDefinition> = {
       to_do: {
         rich_text: block.richText.map(richTextToNotion),
         checked: block.checked ?? false,
+        children: block.children?.map((c) => blockRegistry[c.type]?.toNotionBlock(c)).filter(Boolean),
       },
     }),
   },
@@ -141,16 +152,19 @@ export const blockRegistry: Record<string, BlockDefinition> = {
     type: "quote",
     label: "Quote",
     icon: "Quote",
+    canHaveChildren: true,
     createDefault: () => ({
       id: crypto.randomUUID(),
       type: "quote",
       richText: richText(""),
+      children: [],
     }),
     toNotionBlock: (block) => ({
       object: "block",
       type: "quote",
       quote: {
         rich_text: block.richText.map(richTextToNotion),
+        children: block.children?.map((c) => blockRegistry[c.type]?.toNotionBlock(c)).filter(Boolean),
       },
     }),
   },
@@ -159,6 +173,7 @@ export const blockRegistry: Record<string, BlockDefinition> = {
     type: "toggle",
     label: "Toggle",
     icon: "ChevronRight",
+    canHaveChildren: true,
     createDefault: () => ({
       id: crypto.randomUUID(),
       type: "toggle",
@@ -179,6 +194,7 @@ export const blockRegistry: Record<string, BlockDefinition> = {
     type: "divider",
     label: "Divider",
     icon: "Minus",
+    canHaveChildren: false,
     createDefault: () => ({
       id: crypto.randomUUID(),
       type: "divider",
@@ -195,6 +211,7 @@ export const blockRegistry: Record<string, BlockDefinition> = {
     type: "code",
     label: "Code",
     icon: "Code",
+    canHaveChildren: false,
     createDefault: () => ({
       id: crypto.randomUUID(),
       type: "code",
@@ -215,11 +232,13 @@ export const blockRegistry: Record<string, BlockDefinition> = {
     type: "callout",
     label: "Callout",
     icon: "FileText",
+    canHaveChildren: true,
     createDefault: () => ({
       id: crypto.randomUUID(),
       type: "callout",
       richText: richText(""),
       icon: "💡",
+      children: [],
     }),
     toNotionBlock: (block) => ({
       object: "block",
@@ -227,6 +246,7 @@ export const blockRegistry: Record<string, BlockDefinition> = {
       callout: {
         rich_text: block.richText.map(richTextToNotion),
         icon: block.icon ? { emoji: block.icon } : undefined,
+        children: block.children?.map((c) => blockRegistry[c.type]?.toNotionBlock(c)).filter(Boolean),
       },
     }),
   },

@@ -11,6 +11,7 @@ type LossyConversionDialogProps = {
 type UnsupportedTransitionDialogProps = {
   unsupportedFeatures: string[];
   onStay: () => void;
+  onSwitchAnyway: () => void;
 };
 
 export function LossyConversionDialog({
@@ -55,6 +56,7 @@ export function LossyConversionDialog({
 export function UnsupportedTransitionDialog({
   unsupportedFeatures,
   onStay,
+  onSwitchAnyway,
 }: UnsupportedTransitionDialogProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -70,13 +72,21 @@ export function UnsupportedTransitionDialog({
             <li key={i}>{f}</li>
           ))}
         </ul>
-        <Button
-          onClick={onStay}
-          className="flex-1 rounded-xl text-xs"
-          variant="outline"
-        >
-          Stay in current mode
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={onStay}
+            className="flex-1 rounded-xl text-xs"
+            variant="outline"
+          >
+            Stay in current mode
+          </Button>
+          <Button
+            onClick={onSwitchAnyway}
+            className="flex-1 rounded-xl text-xs"
+          >
+            Switch anyway
+          </Button>
+        </div>
       </div>
     </div>
   );

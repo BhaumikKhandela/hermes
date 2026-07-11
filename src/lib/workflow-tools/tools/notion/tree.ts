@@ -78,15 +78,34 @@ export function indentBlock(blocks: VisualBlock[], blockId: string): VisualBlock
   return [...blocks];
 }
 
+function findParentBlock(
+  blocks: VisualBlock[],
+  targetChildren: VisualBlock[],
+): { block: VisualBlock; parent: VisualBlock[]; index: number } | null {
+  for (let i = 0; i < blocks.length; i++) {
+    if (blocks[i].children === targetChildren) {
+      return { block: blocks[i], parent: blocks, index: i };
+    }
+    const children = blocks[i].children;
+    if (children && children.length > 0) {
+      const found = findParentBlock(children, targetChildren);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 export function outdentBlock(blocks: VisualBlock[], blockId: string): VisualBlock[] {
   const source = findBlockById(blocks, blockId);
   if (!source) return blocks;
 
-  const parent = findBlockById(blocks, source.parent === blocks ? "" : "");
-  if (!parent || parent.parent === blocks) return blocks;
+  if (source.parent === blocks) return blocks;
+
+  const parentBlock = findParentBlock(blocks, source.parent);
+  if (!parentBlock) return blocks;
 
   const [removed] = source.parent.splice(source.index, 1);
-  parent.parent.splice(parent.index + 1, 0, removed);
+  parentBlock.parent.splice(parentBlock.index + 1, 0, removed);
 
   return [...blocks];
 }

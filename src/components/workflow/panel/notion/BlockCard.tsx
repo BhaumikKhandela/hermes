@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { VisualBlock } from "@/lib/workflow-tools/tools/notion/types";
 import { blockRegistry } from "@/lib/workflow-tools/tools/notion/registry";
-import { GripVertical, ChevronUp, ChevronDown, Copy, Trash2 } from "lucide-react";
+import { GripVertical, ChevronUp, ChevronDown, ChevronRight, ChevronLeft, Copy, Trash2 } from "lucide-react";
 
 type Props = {
   block: VisualBlock;
@@ -12,9 +12,9 @@ type Props = {
   onMoveUp: () => void;
   onMoveDown: () => void;
   onDuplicate: () => void;
+  onIndent?: () => void;
+  onOutdent?: () => void;
   onDragStart: (e: React.DragEvent) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDrop: (e: React.DragEvent) => void;
   isFirst: boolean;
   isLast: boolean;
 };
@@ -27,7 +27,7 @@ const CODE_LANGUAGES = [
 
 export function BlockCard({
   block, onUpdate, onDelete, onMoveUp, onMoveDown, onDuplicate,
-  onDragStart, onDragOver, onDrop, isFirst, isLast,
+  onIndent, onOutdent, onDragStart, isFirst, isLast,
 }: Props) {
   const def = blockRegistry[block.type];
   const [showMenu, setShowMenu] = useState(false);
@@ -68,8 +68,6 @@ export function BlockCard({
       className="group flex gap-2 items-start"
       draggable
       onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
     >
       {/* Drag handle + Menu */}
       <div className="relative flex flex-col items-center pt-1">
@@ -112,6 +110,22 @@ export function BlockCard({
             >
               <Copy size={12} /> Duplicate
             </button>
+            {onOutdent && (
+              <button
+                onClick={() => { onOutdent(); setShowMenu(false); }}
+                className="flex items-center gap-2 w-full px-2 py-1.5 text-xs text-[#111827] hover:bg-[#F5F5FF] rounded"
+              >
+                <ChevronLeft size={12} /> Outdent
+              </button>
+            )}
+            {onIndent && (
+              <button
+                onClick={() => { onIndent(); setShowMenu(false); }}
+                className="flex items-center gap-2 w-full px-2 py-1.5 text-xs text-[#111827] hover:bg-[#F5F5FF] rounded"
+              >
+                <ChevronRight size={12} /> Indent
+              </button>
+            )}
             <div className="border-t border-[#E7E7E7] my-0.5" />
             <button
               onClick={() => { onDelete(); setShowMenu(false); }}

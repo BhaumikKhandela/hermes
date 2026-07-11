@@ -184,10 +184,10 @@ export function NotionConfig({
   const updatePropsValidation = useJsonValidation(updatePropertiesJson);
 
   const hasJsonErrors =
-    (!filterJson.trim() ? false : !filterValidation.isValid && !filterValidation.isExpression) ||
-    (!sortsJson.trim() ? false : !sortsValidation.isValid && !sortsValidation.isExpression) ||
-    (!propertiesJson.trim() ? false : !createPropsValidation.isValid && !createPropsValidation.isExpression) ||
-    (!updatePropertiesJson.trim() ? false : !updatePropsValidation.isValid && !updatePropsValidation.isExpression);
+    (!filterJson.trim() ? false : !filterValidation.isValid) ||
+    (!sortsJson.trim() ? false : !sortsValidation.isValid) ||
+    (!propertiesJson.trim() ? false : !createPropsValidation.isValid) ||
+    (!updatePropertiesJson.trim() ? false : !updatePropsValidation.isValid);
 
   const handleCredentialCreated = useCallback((newId: string) => {
     setShowCreateForm(false);

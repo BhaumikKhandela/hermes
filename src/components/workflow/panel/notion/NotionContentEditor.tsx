@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import type { VisualBlock, NotionContent } from "@/lib/workflow-tools/tools/notion/types";
+import { useState, useCallback, useEffect, useRef } from "react";
+import type { VisualBlock, NotionContent, EditorMode, VisualDraftState, MarkdownDraftState, JsonDraftState } from "@/lib/workflow-tools/tools/notion/types";
 import { visualBlocksToNotionJson, tryConvertNotionJsonToVisual, visualBlocksToMarkdown } from "@/lib/workflow-tools/tools/notion/convert";
 import { VisualBlockEditor } from "./VisualBlockEditor";
 import { MarkdownEditor } from "./MarkdownEditor";
@@ -10,8 +10,6 @@ import { LossyConversionDialog, UnsupportedTransitionDialog } from "./ModeWarnin
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Maximize2 } from "lucide-react";
-
-type EditorMode = "visual" | "markdown" | "json";
 
 type Props = {
   value: NotionContent | undefined;
@@ -24,24 +22,83 @@ type WarningState =
   | { type: "lossy"; unsupportedFeatures: string[]; targetMode: EditorMode; convertedBlocks: VisualBlock[] }
   | null;
 
+function makeInitialVisualState(value: NotionContent | undefined): VisualDraftState {
+  if (value?.mode === "visual") {
+    return { status: "user-edited", value: value.blocks };
+  }
+  return { status: "uninitialized", value: [] };
+}
+
+function makeInitialMarkdownState(value: NotionContent | undefined): MarkdownDraftState {
+  if (value?.mode === "markdown") {
+    return { status: "user-edited", value: value.markdown };
+  }
+  return { status: "uninitialized", value: "" };
+}
+
+function makeInitialJsonState(value: NotionContent | undefined): JsonDraftState {
+  if (value?.mode === "json") {
+    return { status: "user-edited", value: value.json };
+  }
+  return { status: "uninitialized", value: "" };
+}
+
+function getConversionSupport(
+  source: EditorMode,
+  target: EditorMode,
+  sourceValue: string | VisualBlock[],
+):
+  | { supported: false; unsupportedFeatures: string[] }
+  | { supported: true; lossless: false; unsupportedFeatures: string[]; convertedValue: VisualBlock[] }
+  | { supported: true; lossless: true; convertedValue: string | VisualBlock[] }
+{
+  if (source === "visual" && target === "markdown") {
+    const md = visualBlocksToMarkdown(sourceValue as VisualBlock[]);
+    return { supported: true, lossless: true, convertedValue: md };
+  }
+  if (source === "visual" && target === "json") {
+    const jsonStr = JSON.stringify(visualBlocksToNotionJson(sourceValue as VisualBlock[]), null, 2);
+    return { supported: true, lossless: true, convertedValue: jsonStr };
+  }
+  if (source === "json" && target === "visual") {
+    const result = tryConvertNotionJsonToVisual(sourceValue as string);
+    if (!result.success) {
+      return { supported: true, lossless: false, unsupportedFeatures: result.unsupportedFeatures, convertedValue: result.partialBlocks };
+    }
+    return { supported: true, lossless: true, convertedValue: result.blocks };
+  }
+  return { supported: false, unsupportedFeatures: [`${source} to ${target} conversion is not supported`] };
+}
+
+function getCurrentValue(mode: EditorMode, visual: VisualBlock[], md: string, js: string): string | VisualBlock[] {
+  switch (mode) {
+    case "visual": return visual;
+    case "markdown": return md;
+    case "json": return js;
+  }
+}
+
 export function NotionContentEditor({ value, onChange, layout = "compact" }: Props) {
   const [mode, setMode] = useState<EditorMode>(value?.mode || "visual");
-  const [visualBlocks, setVisualBlocks] = useState<VisualBlock[]>(
-    value?.mode === "visual" ? value.blocks : [],
-  );
-  const [markdown, setMarkdown] = useState<string>(
-    value?.mode === "markdown" ? value.markdown : "",
-  );
-  const [json, setJson] = useState<string>(
-    value?.mode === "json" ? value.json : "",
-  );
+
+  const [visualState, setVisualState] = useState<VisualDraftState>(() => makeInitialVisualState(value));
+  const [markdownState, setMarkdownState] = useState<MarkdownDraftState>(() => makeInitialMarkdownState(value));
+  const [jsonState, setJsonState] = useState<JsonDraftState>(() => makeInitialJsonState(value));
 
   const [warning, setWarning] = useState<WarningState>(null);
   const [showExpanded, setShowExpanded] = useState(false);
 
-  const [draftVisual, setDraftVisual] = useState<VisualBlock[] | null>(null);
-  const [draftMarkdown, setDraftMarkdown] = useState<string | null>(null);
-  const [draftJson, setDraftJson] = useState<string | null>(null);
+  const visualBlocks = visualState.value;
+  const markdown = markdownState.value;
+  const json = jsonState.value;
+
+  // Track the value from the latest render for use in callbacks
+  const latestVisualRef = useRef(visualBlocks);
+  const latestMarkdownRef = useRef(markdown);
+  const latestJsonRef = useRef(json);
+  latestVisualRef.current = visualBlocks;
+  latestMarkdownRef.current = markdown;
+  latestJsonRef.current = json;
 
   useEffect(() => {
     switch (mode) {
@@ -69,80 +126,90 @@ export function NotionContentEditor({ value, onChange, layout = "compact" }: Pro
     }
   }, [mode, visualBlocks, markdown, json, onChange]);
 
+  const setTarget = useCallback((target: EditorMode, state: VisualDraftState | MarkdownDraftState | JsonDraftState) => {
+    switch (target) {
+      case "visual": setVisualState(state as VisualDraftState); break;
+      case "markdown": setMarkdownState(state as MarkdownDraftState); break;
+      case "json": setJsonState(state as JsonDraftState); break;
+    }
+  }, []);
+
+  const getTargetState = useCallback((target: EditorMode): VisualDraftState | MarkdownDraftState | JsonDraftState => {
+    switch (target) {
+      case "visual": return visualState;
+      case "markdown": return markdownState;
+      case "json": return jsonState;
+    }
+  }, [visualState, markdownState, jsonState]);
+
   const attemptModeSwitch = useCallback((target: EditorMode) => {
     if (target === mode) return;
+    const source = mode;
 
-    if (target === "visual") {
-      if (mode === "markdown") {
-        setWarning({
-          type: "unsupported",
-          unsupportedFeatures: [
-            "Markdown-to-Visual conversion is not supported",
-            "Annotations, tables, and complex formatting cannot be converted to blocks",
-          ],
-          targetMode: "visual",
-        });
-        return;
-      }
-      if (mode === "json") {
-        const result = tryConvertNotionJsonToVisual(json);
-        if (!result.success) {
-          setWarning({
-            type: "lossy",
-            unsupportedFeatures: result.unsupportedFeatures,
-            targetMode: "visual",
-            convertedBlocks: result.blocks,
-          });
-          return;
-        }
-        setVisualBlocks(result.blocks);
-        setMode("visual");
-        return;
-      }
+    const targetProv = getTargetState(target);
+
+    if (targetProv.status === "user-edited") {
+      setMode(target);
+      return;
     }
 
-    if (target === "markdown") {
-      if (mode === "visual") {
-        const md = visualBlocksToMarkdown(visualBlocks);
-        setMarkdown(md);
-        setMode("markdown");
-        return;
-      }
-      if (mode === "json") {
-        setWarning({
-          type: "unsupported",
-          unsupportedFeatures: [
-            "JSON-to-Markdown conversion is not supported",
-            "Switch to Visual first or edit Markdown directly",
-          ],
-          targetMode: "markdown",
+    if (targetProv.status === "generated") {
+      const conv = getConversionSupport(
+        source,
+        target,
+        getCurrentValue(source, latestVisualRef.current, latestMarkdownRef.current, latestJsonRef.current),
+      );
+      if (conv.supported) {
+        setTarget(target, {
+          status: "generated",
+          value: conv.convertedValue as any,
+          generatedFrom: source,
+          conversion: conv.lossless ? "lossless" : "lossy",
         });
-        return;
+        setMode(target);
+      } else {
+        setMode(target);
       }
+      return;
     }
 
-    if (target === "json") {
-      if (mode === "visual") {
-        const jsonStr = JSON.stringify(visualBlocksToNotionJson(visualBlocks), null, 2);
-        setJson(jsonStr);
-        setMode("json");
-        return;
-      }
-      if (mode === "markdown") {
-        setWarning({
-          type: "unsupported",
-          unsupportedFeatures: [
-            "Markdown-to-JSON conversion is not supported",
-            "Switch to Visual first or edit JSON directly",
-          ],
-          targetMode: "json",
-        });
-        return;
-      }
+    // targetProv.status === "uninitialized"
+    const conv = getConversionSupport(
+      source,
+      target,
+      getCurrentValue(source, latestVisualRef.current, latestMarkdownRef.current, latestJsonRef.current),
+    );
+
+    if (conv.supported && conv.lossless) {
+      setTarget(target, {
+        status: "generated",
+        value: conv.convertedValue as any,
+        generatedFrom: source,
+        conversion: "lossless",
+      });
+      setMode(target);
+      return;
     }
 
-    setMode(target);
-  }, [mode, visualBlocks, json, markdown]);
+    if (conv.supported && !conv.lossless) {
+      setWarning({
+        type: "lossy",
+        unsupportedFeatures: conv.unsupportedFeatures,
+        targetMode: target,
+        convertedBlocks: conv.convertedValue,
+      });
+      return;
+    }
+
+    if (!conv.supported) {
+      setWarning({
+        type: "unsupported",
+        unsupportedFeatures: conv.unsupportedFeatures,
+        targetMode: target,
+      });
+      return;
+    }
+  }, [mode, getTargetState, setTarget]);
 
   const handleStayInMode = useCallback(() => {
     setWarning(null);
@@ -151,13 +218,64 @@ export function NotionContentEditor({ value, onChange, layout = "compact" }: Pro
   const handleConvertAnyway = useCallback(() => {
     if (!warning || warning.type !== "lossy") return;
 
-    if (warning.targetMode === "visual") {
-      setVisualBlocks(warning.convertedBlocks);
-      setMode("visual");
-    }
-
+    const target = warning.targetMode;
+    setTarget(target, {
+      status: "generated",
+      value: warning.convertedBlocks as any,
+      generatedFrom: mode,
+      conversion: "lossy",
+    });
+    setMode(target);
     setWarning(null);
-  }, [warning]);
+  }, [warning, mode, setTarget]);
+
+  const handleSwitchAnyway = useCallback(() => {
+    if (!warning || warning.type !== "unsupported") return;
+
+    const target = warning.targetMode;
+    switch (target) {
+      case "visual":
+        setTarget(target, { status: "user-edited", value: [] });
+        break;
+      case "markdown":
+        setTarget(target, { status: "user-edited", value: "" });
+        break;
+      case "json":
+        setTarget(target, { status: "user-edited", value: "" });
+        break;
+    }
+    setMode(target);
+    setWarning(null);
+  }, [warning, mode, setTarget]);
+
+  const handleEditorChange = useCallback((newValue: string | VisualBlock[]) => {
+    switch (mode) {
+      case "visual":
+        setVisualState((prev) => ({
+          status: "user-edited",
+          value: newValue as VisualBlock[],
+          generatedFrom: prev.generatedFrom,
+          conversion: prev.conversion,
+        }));
+        break;
+      case "markdown":
+        setMarkdownState((prev) => ({
+          status: "user-edited",
+          value: newValue as string,
+          generatedFrom: prev.generatedFrom,
+          conversion: prev.conversion,
+        }));
+        break;
+      case "json":
+        setJsonState((prev) => ({
+          status: "user-edited",
+          value: newValue as string,
+          generatedFrom: prev.generatedFrom,
+          conversion: prev.conversion,
+        }));
+        break;
+    }
+  }, [mode]);
 
   const modes: { key: EditorMode; label: string }[] = [
     { key: "visual", label: "Visual Blocks" },
@@ -195,13 +313,13 @@ export function NotionContentEditor({ value, onChange, layout = "compact" }: Pro
   const renderEditorBody = (expanded: boolean) => (
     <div className={expanded ? "min-h-[400px]" : ""}>
       {mode === "visual" && (
-        <VisualBlockEditor blocks={visualBlocks} onChange={setVisualBlocks} />
+        <VisualBlockEditor blocks={visualBlocks} onChange={(v) => handleEditorChange(v)} />
       )}
       {mode === "markdown" && (
-        <MarkdownEditor value={markdown} onChange={setMarkdown} rows={expanded ? 16 : 8} />
+        <MarkdownEditor value={markdown} onChange={(v) => handleEditorChange(v)} rows={expanded ? 16 : 8} />
       )}
       {mode === "json" && (
-        <JsonEditor value={json} onChange={setJson} rows={expanded ? 16 : 8} />
+        <JsonEditor value={json} onChange={(v) => handleEditorChange(v)} rows={expanded ? 16 : 8} />
       )}
     </div>
   );
@@ -216,6 +334,7 @@ export function NotionContentEditor({ value, onChange, layout = "compact" }: Pro
           <UnsupportedTransitionDialog
             unsupportedFeatures={warning.unsupportedFeatures}
             onStay={handleStayInMode}
+            onSwitchAnyway={handleSwitchAnyway}
           />
         )}
         {warning && warning.type === "lossy" && (
