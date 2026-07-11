@@ -34,6 +34,10 @@ const dbSchema = z.object({
     .any()
     .optional()
     .describe("Document to insert (MongoDB) / row data (SQL insert)"),
+  documents: z
+    .array(z.any())
+    .optional()
+    .describe("Array of documents to insert (MongoDB insertMany)"),
   data: z
     .any()
     .optional()
@@ -51,6 +55,10 @@ const dbSchema = z.object({
     .optional()
     .describe("Column definitions string for createTable (SQL only), e.g. 'id SERIAL PRIMARY KEY, name TEXT NOT NULL'"),
 });
+
+const partialDbSchema = dbSchema.partial();
+
+type DbInput = z.input<typeof partialDbSchema>;
 
 function buildWhereClause(
   where: Record<string, any>,
@@ -123,9 +131,21 @@ export const createPostgresTool: ToolFactory = (config) => {
   const ssl = config?.ssl ?? false;
 
   return tool(
-    async (input) => {
-      const { action, sql, values, table, document, data, where, limit, columns } =
-        dbSchema.parse(input);
+    async (input: DbInput) => {
+      const parsed = partialDbSchema.parse(input);
+      const action = parsed.action || config?.action || "query";
+      const sql = parsed.sql || config?.sql;
+      const values = parsed.values || config?.values;
+      const table = parsed.table;
+      const document = parsed.document;
+      const data = parsed.data;
+      const where = parsed.where;
+      const limit = parsed.limit;
+      const columns = parsed.columns;
+
+      if (action === "query" && !sql && !table) {
+        return "No SQL query provided. Configure a query in the node settings or pass `sql` or `table` as a tool argument.";
+      }
 
       const pool = new Pool({ host, port, user, password, database, ssl });
       let result: any;
@@ -216,8 +236,8 @@ export const createPostgresTool: ToolFactory = (config) => {
     {
       name: "postgresDB",
       description:
-        "Query a PostgreSQL database using your own credentials. Supports raw SQL with parameterized values, or structured insert/update/delete/query by table. Also supports createTable and dropTable with a columns string.",
-      schema: dbSchema,
+        "Query a PostgreSQL database using your own credentials. Supports raw SQL with parameterized values, or structured insert/update/delete/query by table. Falls back to configured values when arguments are omitted.",
+      schema: partialDbSchema,
     },
   );
 };
@@ -231,9 +251,21 @@ export const createMySQLTool: ToolFactory = (config) => {
   const ssl = config?.ssl ?? false;
 
   return tool(
-    async (input) => {
-      const { action, sql, values, table, document, data, where, limit, columns } =
-        dbSchema.parse(input);
+    async (input: DbInput) => {
+      const parsed = partialDbSchema.parse(input);
+      const action = parsed.action || config?.action || "query";
+      const sql = parsed.sql || config?.sql;
+      const values = parsed.values || config?.values;
+      const table = parsed.table;
+      const document = parsed.document;
+      const data = parsed.data;
+      const where = parsed.where;
+      const limit = parsed.limit;
+      const columns = parsed.columns;
+
+      if (action === "query" && !sql && !table) {
+        return "No SQL query provided. Configure a query in the node settings or pass `sql` or `table` as a tool argument.";
+      }
 
       const conn = await mysql.createConnection({
         host,
@@ -351,8 +383,8 @@ export const createMySQLTool: ToolFactory = (config) => {
     {
       name: "mysqlDB",
       description:
-        "Query a MySQL database using your own credentials. Supports raw SQL with parameterized values, or structured insert/update/delete/query by table. Also supports createTable and dropTable with a columns string.",
-      schema: dbSchema,
+        "Query a MySQL database using your own credentials. Supports raw SQL with parameterized values, or structured insert/update/delete/query by table. Falls back to configured values when arguments are omitted.",
+      schema: partialDbSchema,
     },
   );
 };
@@ -367,9 +399,19 @@ export const createMongoDBTool: ToolFactory = (config) => {
   }
 
   return tool(
-    async (input) => {
-      const { action, collection, document, data, where, limit } =
-        dbSchema.parse(input);
+    async (input: DbInput) => {
+      const parsed = partialDbSchema.parse(input);
+      const action = parsed.action || config?.action || "query";
+      const collection = parsed.collection || config?.collection;
+      const document = parsed.document || config?.document;
+      const documents = parsed.documents || config?.documents;
+      const data = parsed.data || config?.data;
+      const where = parsed.where || config?.filter;
+      const limit = parsed.limit;
+
+      if (!collection) {
+        return "No collection provided. Configure a collection in the node settings or pass `collection` as a tool argument.";
+      }
 
       const conn = await mongoose.createConnection(uri).asPromise();
       let result: any;
@@ -382,24 +424,35 @@ export const createMongoDBTool: ToolFactory = (config) => {
 
         switch (action) {
           case "query": {
-            const coll = db.collection(collection || "");
-            const docs = where
-              ? await coll.find(where).limit(limit || 50).toArray()
-              : await coll.find({}).limit(limit || 50).toArray();
-            result = docs;
+            const coll = db.collection(collection);
+            const pipeline = config?.pipeline;
+            if (pipeline) {
+              const docs = await coll.aggregate(pipeline).toArray();
+              result = docs;
+            } else {
+              const docs = where
+                ? await coll.find(where).limit(limit || 50).toArray()
+                : await coll.find({}).limit(limit || 50).toArray();
+              result = docs;
+            }
             break;
           }
           case "insert": {
-            const coll = db.collection(collection || "");
-            const res = await coll.insertOne(document || {});
-            result = { insertedId: res.insertedId.toString() };
+            const coll = db.collection(collection);
+            if (documents && documents.length > 1) {
+              const res = await coll.insertMany(documents);
+              result = { insertedCount: res.insertedCount };
+            } else {
+              const res = await coll.insertOne(document || documents?.[0] || {});
+              result = { insertedId: res.insertedId.toString() };
+            }
             break;
           }
           case "update": {
-            const coll = db.collection(collection || "");
+            const coll = db.collection(collection);
             const res = await coll.updateMany(
               where || {},
-              { $set: data || document || {} },
+              data || { $set: document || {} },
             );
             result = {
               matchedCount: res.matchedCount,
@@ -408,7 +461,7 @@ export const createMongoDBTool: ToolFactory = (config) => {
             break;
           }
           case "delete": {
-            const coll = db.collection(collection || "");
+            const coll = db.collection(collection);
             const res = await coll.deleteMany(where || {});
             result = { deletedCount: res.deletedCount };
             break;
@@ -448,8 +501,8 @@ export const createMongoDBTool: ToolFactory = (config) => {
     {
       name: "mongoDB",
       description:
-        "Query a MongoDB database using your own connection URI. Supports finding documents, inserting, updating, deleting, listing collections, and creating/dropping collections.",
-      schema: dbSchema,
+        "Query a MongoDB database using your own connection URI. Supports finding documents, aggregating, inserting, updating, deleting, listing collections, and creating/dropping collections. Falls back to configured values when arguments are omitted.",
+      schema: partialDbSchema,
     },
   );
 };
