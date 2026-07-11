@@ -4,7 +4,6 @@ import { useCallback, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
 import type { CredentialSchema } from "@/lib/credentials/credentialSchemas";
 
@@ -61,47 +60,48 @@ export function CredentialForm({ schema, onCreated, onCancel }: CredentialFormPr
   }, [values, name, providerAccountId, schema, onCreated]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1.5">
-        <Label>Credential Name</Label>
+        <Label className="text-[13px] font-semibold text-[#111827]">Credential Name</Label>
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. OpenAI Production"
+          className="rounded-xl bg-[#F5F5F5] border-[#E7E7E7] focus:bg-white focus:ring-2 focus:ring-[rgba(91,92,235,0.15)]"
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label>Account Identifier (optional)</Label>
+        <Label className="text-[13px] font-semibold text-[#111827]">Account Identifier (optional)</Label>
         <Input
           value={providerAccountId}
           onChange={(e) => setProviderAccountId(e.target.value)}
           placeholder="e.g. user@gmail.com"
+          className="rounded-xl bg-[#F5F5F5] border-[#E7E7E7] focus:bg-white focus:ring-2 focus:ring-[rgba(91,92,235,0.15)]"
         />
       </div>
 
-      <Separator />
-
       {schema.fields.map((field) => (
         <div key={field.key} className="flex flex-col gap-1.5">
-          <Label>{field.label}</Label>
+          <Label className="text-[13px] font-semibold text-[#111827]">{field.label}</Label>
           <Input
             type={field.type === "password" ? "password" : field.type === "number" ? "number" : "text"}
             placeholder={field.placeholder}
             value={values[field.key] || ""}
             onChange={(e) => handleChange(field.key, e.target.value)}
+            className="rounded-xl bg-[#F5F5F5] border-[#E7E7E7] focus:bg-white focus:ring-2 focus:ring-[rgba(91,92,235,0.15)]"
           />
         </div>
       ))}
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-[#EF4444]">{error}</p>}
 
       <div className="flex gap-2">
-        <Button onClick={handleSave} disabled={saving} className="flex-1">
+        <Button onClick={handleSave} disabled={saving} className="flex-1 rounded-xl">
           {saving && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
           Create Credential
         </Button>
-        <Button variant="outline" onClick={onCancel} disabled={saving}>
+        <Button variant="outline" onClick={onCancel} disabled={saving} className="rounded-xl">
           Cancel
         </Button>
       </div>
