@@ -98,7 +98,7 @@ export class agentService {
     }
 
     const row = await Agent.findOne({ projectId }).select(
-      "agentTree agent_nodes -_id",
+      "agentTree agent_nodes agent_edges -_id",
     );
 
     return row;
