@@ -1,14 +1,12 @@
 import { describe, it, expect } from "vitest";
 import type { VisualBlock } from "../types";
-import { indentBlock, outdentBlock, findBlockById, duplicateBlock } from "../tree";
-import { blockRegistry } from "../registry";
-import { visualBlocksToNotionJson, visualBlocksToMarkdown } from "../convert";
+import { indentBlock, findBlockById, duplicateBlock } from "../tree";
+import { visualBlocksToMarkdown, analyzeVisualForMarkdownLoss } from "../convert";
 import { cloneVisualBlockWithFreshIds } from "../cloneBlock";
 import { substituteExpressionsFromJson, validateJsonWithExpressions } from "../../../../../components/workflow/panel/notion/useJsonValidation";
 import {
   attemptModeSwitch,
   applyLossyConversion,
-  applySwitchAnyway,
   applyEditorChange,
   makeInitialVisualState,
   makeInitialMarkdownState,
@@ -651,5 +649,128 @@ describe("attemptModeSwitch (production state machine)", () => {
     const r4 = attemptModeSwitch("markdown", "json", v1, mdVal, jsonVal, r2.newState as any, r3.newState as any, r1.newState as any);
     expect(r4.kind).toBe("switch");
     expect(r4.newState.value as string).toBe(jsonVal);
+  });
+
+  // Scenario H: Visual with underline -> Markdown is lossy
+  it("H: visual with underline -> markdown produces show-lossy-confirmation", () => {
+    const vs = makeInitialVisualState(undefined);
+    const ms = makeInitialMarkdownState(undefined);
+    const js = makeInitialJsonState(undefined);
+
+    const visual: VisualBlock[] = [{
+      id: "u1",
+      type: "paragraph",
+      richText: [{ id: "rt1", text: "underlined", annotations: { underline: true } }],
+    }];
+
+    const r = attemptModeSwitch("visual", "markdown", visual, "", "", vs, ms, js);
+    expect(r.kind).toBe("show-lossy-confirmation");
+    expect(r.unsupportedFeatures).toContain("underline annotations");
+    expect(typeof r.convertedValue).toBe("string");
+    expect(r.convertedValue).toContain("underlined");
+  });
+
+  // Scenario I: Confirm lossy visual->markdown produces correct draft
+  it("I: confirming lossy visual->markdown creates generated markdown draft", () => {
+    const visual: VisualBlock[] = [{
+      id: "u2",
+      type: "paragraph",
+      richText: [{ id: "rt2", text: "underlined", annotations: { underline: true } }],
+    }];
+
+    const vs = makeInitialVisualState(undefined);
+    const ms = makeInitialMarkdownState(undefined);
+    const js = makeInitialJsonState(undefined);
+
+    const r = attemptModeSwitch("visual", "markdown", visual, "", "", vs, ms, js);
+    expect(r.kind).toBe("show-lossy-confirmation");
+
+    const confirmed = applyLossyConversion("markdown", "visual", r.convertedValue);
+    expect(confirmed.targetMode).toBe("markdown");
+    expect((confirmed.newState as any).status).toBe("generated");
+    expect((confirmed.newState as any).value).toBe(r.convertedValue);
+    expect((confirmed.newState as any).generatedFrom).toBe("visual");
+    expect((confirmed.newState as any).conversion).toBe("lossy");
+  });
+
+  // Scenario J: Visual without underline -> Markdown is lossless
+  it("J: visual without underline -> markdown is lossless (plain paragraph)", () => {
+    const vs = makeInitialVisualState(undefined);
+    const ms = makeInitialMarkdownState(undefined);
+    const js = makeInitialJsonState(undefined);
+
+    const visual: VisualBlock[] = [{
+      id: "p1",
+      type: "paragraph",
+      richText: [{ id: "rt1", text: "hello" }],
+    }];
+
+    const r = attemptModeSwitch("visual", "markdown", visual, "", "", vs, ms, js);
+    expect(r.kind).toBe("switch");
+  });
+
+  // Scenario K: Bold/italic/code/strikethrough/link remain lossless
+  it("K: visual with bold/italic/code/strikethrough/link -> markdown is lossless", () => {
+    const vs = makeInitialVisualState(undefined);
+    const ms = makeInitialMarkdownState(undefined);
+    const js = makeInitialJsonState(undefined);
+
+    const visual: VisualBlock[] = [{
+      id: "p2",
+      type: "paragraph",
+      richText: [
+        { id: "rt1", text: "bold", annotations: { bold: true } },
+        { id: "rt2", text: "italic", annotations: { italic: true } },
+        { id: "rt3", text: "code", annotations: { code: true } },
+        { id: "rt4", text: "strike", annotations: { strikethrough: true } },
+        { id: "rt5", text: "linked", link: "https://example.com" },
+      ],
+    }];
+
+    const r = attemptModeSwitch("visual", "markdown", visual, "", "", vs, ms, js);
+    expect(r.kind).toBe("switch");
+  });
+
+  // Scenario L: Underline detected recursively in nested descendant
+  it("L: underline in nested descendant is detected", () => {
+    const vs = makeInitialVisualState(undefined);
+    const ms = makeInitialMarkdownState(undefined);
+    const js = makeInitialJsonState(undefined);
+
+    const visual: VisualBlock[] = [{
+      id: "parent",
+      type: "toggle",
+      richText: [{ id: "rt1", text: "no underline here" }],
+      children: [{
+        id: "child",
+        type: "paragraph",
+        richText: [{ id: "rt2", text: "nested underline", annotations: { underline: true } }],
+      }],
+    }];
+
+    const r = attemptModeSwitch("visual", "markdown", visual, "", "", vs, ms, js);
+    expect(r.kind).toBe("show-lossy-confirmation");
+    expect(r.unsupportedFeatures).toContain("underline annotations");
+    expect(typeof r.convertedValue).toBe("string");
+  });
+
+  // Scenario M: Multiple unsupported features are deduplicated
+  it("M: multiple underline annotations produce one entry in feature list", () => {
+    const visual: VisualBlock[] = [{
+      id: "a",
+      type: "paragraph",
+      richText: [{ id: "rta", text: "first", annotations: { underline: true } }],
+    }, {
+      id: "b",
+      type: "paragraph",
+      richText: [{ id: "rtb", text: "second", annotations: { underline: true } }],
+    }, {
+      id: "c",
+      type: "paragraph",
+      richText: [{ id: "rtc", text: "third", annotations: { underline: true } }],
+    }];
+
+    const features = analyzeVisualForMarkdownLoss(visual);
+    expect(features).toEqual(["underline annotations"]);
   });
 });

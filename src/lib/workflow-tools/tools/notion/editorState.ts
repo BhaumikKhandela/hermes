@@ -1,9 +1,9 @@
 import type { VisualBlock, EditorMode, VisualDraftState, MarkdownDraftState, JsonDraftState, NotionContent } from "./types";
-import { visualBlocksToNotionJson, tryConvertNotionJsonToVisual, visualBlocksToMarkdown } from "./convert";
+import { visualBlocksToNotionJson, tryConvertNotionJsonToVisual, visualBlocksToMarkdown, analyzeVisualForMarkdownLoss } from "./convert";
 
 export type WarningState =
   | { type: "unsupported"; unsupportedFeatures: string[]; targetMode: EditorMode }
-  | { type: "lossy"; unsupportedFeatures: string[]; targetMode: EditorMode; convertedBlocks: VisualBlock[] }
+  | { type: "lossy"; unsupportedFeatures: string[]; targetMode: EditorMode; convertedValue: string | VisualBlock[] }
   | null;
 
 export function makeInitialVisualState(value: NotionContent | undefined): VisualDraftState {
@@ -29,7 +29,7 @@ export function makeInitialJsonState(value: NotionContent | undefined): JsonDraf
 
 export type ConversionInfo =
   | { supported: false; unsupportedFeatures: string[] }
-  | { supported: true; lossless: false; unsupportedFeatures: string[]; convertedValue: VisualBlock[] }
+  | { supported: true; lossless: false; unsupportedFeatures: string[]; convertedValue: string | VisualBlock[] }
   | { supported: true; lossless: true; convertedValue: string | VisualBlock[] };
 
 export function getConversionSupport(
@@ -38,7 +38,12 @@ export function getConversionSupport(
   sourceValue: string | VisualBlock[],
 ): ConversionInfo {
   if (source === "visual" && target === "markdown") {
-    const md = visualBlocksToMarkdown(sourceValue as VisualBlock[]);
+    const blocks = sourceValue as VisualBlock[];
+    const unsupported = analyzeVisualForMarkdownLoss(blocks);
+    const md = visualBlocksToMarkdown(blocks);
+    if (unsupported.length > 0) {
+      return { supported: true, lossless: false, unsupportedFeatures: unsupported, convertedValue: md };
+    }
     return { supported: true, lossless: true, convertedValue: md };
   }
   if (source === "visual" && target === "json") {
@@ -70,7 +75,7 @@ export function getCurrentValue(
 
 export type ModeTransitionResult =
   | { kind: "switch"; targetMode: EditorMode; newState: VisualDraftState | MarkdownDraftState | JsonDraftState }
-  | { kind: "show-lossy-confirmation"; targetMode: EditorMode; unsupportedFeatures: string[]; convertedBlocks: VisualBlock[] }
+  | { kind: "show-lossy-confirmation"; targetMode: EditorMode; unsupportedFeatures: string[]; convertedValue: string | VisualBlock[] }
   | { kind: "show-unsupported-confirmation"; targetMode: EditorMode; unsupportedFeatures: string[] };
 
 export function attemptModeSwitch(
@@ -142,7 +147,7 @@ export function attemptModeSwitch(
       kind: "show-lossy-confirmation",
       targetMode,
       unsupportedFeatures: conv.unsupportedFeatures,
-      convertedBlocks: conv.convertedValue,
+      convertedValue: conv.convertedValue,
     };
   }
 
@@ -156,13 +161,13 @@ export function attemptModeSwitch(
 export function applyLossyConversion(
   targetMode: EditorMode,
   sourceMode: EditorMode,
-  convertedBlocks: VisualBlock[],
+  value: string | VisualBlock[],
 ): { targetMode: EditorMode; newState: VisualDraftState | MarkdownDraftState | JsonDraftState } {
   return {
     targetMode,
     newState: {
       status: "generated",
-      value: convertedBlocks as any,
+      value: value as any,
       generatedFrom: sourceMode,
       conversion: "lossy",
     },

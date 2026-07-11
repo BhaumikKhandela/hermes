@@ -168,6 +168,25 @@ function richTextToNotion(rt: VisualRichText): Record<string, any> {
   return result;
 }
 
+export function analyzeVisualForMarkdownLoss(blocks: VisualBlock[]): string[] {
+  const features = new Set<string>();
+
+  function scan(block: VisualBlock) {
+    for (const rt of block.richText) {
+      if (rt.annotations?.underline) {
+        features.add("underline annotations");
+        break;
+      }
+    }
+    if (block.children) {
+      for (const child of block.children) scan(child);
+    }
+  }
+
+  for (const block of blocks) scan(block);
+  return [...features];
+}
+
 export function visualBlocksToMarkdown(blocks: VisualBlock[]): string {
   return blocks.map((b) => blockToMarkdown(b, 0)).join("\n\n");
 }

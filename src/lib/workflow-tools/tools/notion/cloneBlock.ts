@@ -1,15 +1,5 @@
 import type { VisualBlock } from "./types";
 
-function cloneRichTextIds(block: VisualBlock): VisualBlock {
-  return {
-    ...block,
-    richText: block.richText.map((rt) => ({
-      ...rt,
-      id: crypto.randomUUID(),
-    })),
-  };
-}
-
 export function cloneVisualBlockWithFreshIds(block: VisualBlock): VisualBlock {
   const fresh: VisualBlock = {
     ...block,

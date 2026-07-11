@@ -91,7 +91,7 @@ export function NotionContentEditor({ value, onChange, layout = "compact" }: Pro
           type: "lossy",
           unsupportedFeatures: result.unsupportedFeatures,
           targetMode: result.targetMode,
-          convertedBlocks: result.convertedBlocks,
+          convertedValue: result.convertedValue,
         });
         break;
       case "show-unsupported-confirmation":
@@ -110,7 +110,7 @@ export function NotionContentEditor({ value, onChange, layout = "compact" }: Pro
 
   const handleConvertAnyway = useCallback(() => {
     if (!warning || warning.type !== "lossy") return;
-    const result = applyLossyConversion(warning.targetMode, mode, warning.convertedBlocks);
+    const result = applyLossyConversion(warning.targetMode, mode, warning.convertedValue);
     setTarget(result.targetMode, result.newState);
     setMode(result.targetMode);
     setWarning(null);
