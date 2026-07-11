@@ -40,25 +40,25 @@ const TaskCard = ({ todos }: { todos: TodoListType }) => {
 
   if (!isExpanded) {
     return (
-      <div className="w-full max-w-3xl mx-auto flex items-center gap-2 group">
+      <div className="w-full flex items-center gap-2 group">
         <div
           onClick={() => setIsExpanded(true)}
-          className="flex-1 flex items-center justify-between bg-background border border-border rounded-md px-3 py-2"
+          className="flex-1 flex items-center justify-between bg-white rounded-xl px-3 py-2"
         >
           <div className="flex items-center gap-2 overflow-hidden">
             <StatusIcon status={activeTask?.status} />
-            <span className="text-[12px] text-foreground truncate">
+            <span className="text-xs text-[#111827] truncate">
               {truncateTitle(activeTask.task, 30)}
             </span>
           </div>
 
           <div className="flex items-center gap-2 ml-2">
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-[10px] text-[#6B7280]">
               {completedTodos}/{todos.length}
             </span>
             <ChevronDown
               size={14}
-              className="text-muted-foreground -rotate-90 group-hover:text-foreground transition"
+              className="text-[#6B7280] -rotate-90 group-hover:text-[#111827] transition"
             />
           </div>
         </div>
@@ -67,21 +67,21 @@ const TaskCard = ({ todos }: { todos: TodoListType }) => {
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-background border border-border rounded-xl p-3 shadow-sm">
+    <div className="w-full bg-white rounded-2xl p-[18px]">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[12px] text-muted-foreground">Tasks</span>
+        <span className="text-xs text-[#6B7280]">Tasks</span>
         <button
           onClick={() => setIsExpanded(false)}
-          className="p-1 rounded-md hover:bg-accent transition"
+          className="p-1 rounded-xl hover:bg-[#F5F5F5] transition"
         >
           <ChevronDown size={16} />
         </button>
       </div>
 
       <div className="flex justify-between items-center mb-2">
-        <span className="text-[11px] text-muted-foreground">Progress</span>
+        <span className="text-[11px] text-[#6B7280]">Progress</span>
 
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-[11px] text-[#6B7280]">
           {completedTodos}/{todos.length}
         </span>
       </div>
@@ -96,12 +96,12 @@ const TaskCard = ({ todos }: { todos: TodoListType }) => {
               <StatusIcon status={task.status} />
               <span
                 className={cn(
-                  "text-[11px]",
+                  "text-xs",
                   isComplete
-                    ? "text-foreground"
+                    ? "text-[#111827]"
                     : isInProgress
-                      ? "text-primary"
-                      : "text-muted-foreground",
+                      ? "text-[#5B5CEB]"
+                      : "text-[#6B7280]",
                 )}
               >
                 {truncateTitle(task?.task, 60)}

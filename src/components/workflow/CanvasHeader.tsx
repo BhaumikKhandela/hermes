@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2Icon, Save, SidebarIcon } from "lucide-react";
+import { Loader2Icon, SidebarIcon } from "lucide-react";
 import UpdateProjectTitle from "./UpdateProjectTitle";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/stores";
@@ -58,14 +58,14 @@ export default function CanvasHeader({
   }
 
   return (
-    <header className="h-14 border-b border-slate-200 flex items-center justify-between px-4 shrink-0">
+    <header className="h-14 border-b border-[#E7E7E7] flex items-center justify-between px-7 shrink-0 bg-white">
       <div className="flex items-center gap-4">
         <button
           onClick={() => setIsChatOpen(!isChatOpen)}
-          className={`p-1.5 rounded-md transition ${
+          className={`p-1.5 rounded-xl transition ${
             isChatOpen
-              ? "text-slate-500 hover:bg-slate-100"
-              : "text-blue-600 bg-blue-100 hover:bg-blue-200"
+              ? "text-[#6B7280] hover:bg-[#F5F5F5]"
+              : "text-[#6B7280] hover:bg-[#F5F5F5]"
           }`}
           title={isChatOpen ? "Close Chat" : "Open Chat"}
         >
@@ -78,16 +78,16 @@ export default function CanvasHeader({
         />
       </div>
 
-      <div className="flex items-center gap-3 text-slate-600">
+      <div className="flex items-center gap-3">
         <button
           onClick={() => saveCanvasData()}
-          className="bg-red-500 text-white p-1.5 rounded-md hover:bg-red-600 active:scale-95 transition"
+          className="bg-[#5B5CEB] text-white text-xs font-semibold tracking-widest px-4 h-8 rounded-xl hover:bg-[#4C4DDA] active:scale-95 transition"
           title="Save"
         >
           {loading ? (
-            <Loader2Icon className="animate-spin" />
+            <Loader2Icon className="animate-spin size-4" />
           ) : (
-            <Save size={18} className="fill-current" />
+            "SAVE"
           )}
         </button>
       </div>

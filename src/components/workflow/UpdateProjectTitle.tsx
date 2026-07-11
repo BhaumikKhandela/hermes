@@ -39,7 +39,7 @@ export default function UpdateProjectTitle({
       ) : (
         <span
           onClick={() => setEditing(true)}
-          className="cursor-pointer hover:text-blue-600"
+          className="cursor-pointer hover:text-[#5B5CEB]"
         >
           {title || "Untitled Project"}
         </span>

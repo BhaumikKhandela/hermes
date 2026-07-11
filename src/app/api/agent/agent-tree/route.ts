@@ -24,6 +24,7 @@ export const GET = withErrorHandler(async (req: Request) => {
   return NextResponse.json({
     agentTree: data?.agentTree,
     nodes: data?.agent_nodes,
+    edges: data?.agent_edges,
   });
 });
 

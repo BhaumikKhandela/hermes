@@ -7,7 +7,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { authClient } from "@/lib/auth/auth-client";
 import { MiddlePanel } from "./panel/MiddlePanel";
 import { useDispatch, useSelector } from "react-redux";
-import { applyDBNodes, buildNodes, setAgentConnections } from "@/stores/agentBuilderSlice";
+import { applyDBEdges, applyDBNodes, buildNodes, setAgentConnections } from "@/stores/agentBuilderSlice";
 import { socket } from "@/socket";
 import { AppDispatch, RootState } from "@/stores";
 import { fetchAgentTree } from "@/stores/agentTreeSlice";
@@ -44,6 +44,7 @@ export default function HermesAIBuilder() {
       .then((data) => {
         dispatch(buildNodes(data.agentTree));
         dispatch(applyDBNodes(data.nodes));
+        dispatch(applyDBEdges(data.edges));
         const connections = Array.isArray(data.agentTree)
           ? (data.agentTree.find((n: any) => n.agent_connections)?.agent_connections || [])
           : [];
@@ -137,12 +138,12 @@ export default function HermesAIBuilder() {
   const userId = session.user.id;
 
   return (
-    <div className="flex h-screen bg-white text-slate-900 font-sans overflow-hidden">
+    <div className="flex h-screen bg-[#F6F7FB] text-[#111827] font-sans overflow-hidden">
       {/* SIDEBAR */}
       <aside
         style={{ width: isChatOpen ? `${chatWidth}px` : "0px" }}
-        className={`relative flex flex-col h-full shrink-0 overflow-hidden bg-slate-50
-        ${isChatOpen ? "border-r border-slate-200" : ""}
+        className={`relative flex flex-col h-full shrink-0 overflow-hidden bg-white
+        ${isChatOpen ? "border-r border-[#E7E7E7]" : ""}
         ${!isDragging ? "transition-[width] duration-300 ease-in-out" : ""}`}
       >
         <ChatPanel
