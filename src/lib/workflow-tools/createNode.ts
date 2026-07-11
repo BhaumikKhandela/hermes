@@ -2,7 +2,9 @@ import { toolNodeConfig } from "@/lib/node-configs/toolNode";
 import { modelNodeConfig } from "@/lib/node-configs/modelNode";
 import { agentNodeConfig } from "@/lib/node-configs/agentNode";
 import { subAgentNodeConfig } from "@/lib/node-configs/subAgentNode";
+import { triggerNodeConfig } from "@/lib/node-configs/triggerNode";
 import { getRegistration } from "./registry";
+import { findMetadata } from "./metadata";
 import { resolveToolIcon, resolveModelIcon } from "./iconMap";
 
 type CreateNodeInput = {
@@ -16,6 +18,10 @@ export function createNodeFromRegistry({
   id,
   position,
 }: CreateNodeInput) {
+  if (nodeRegistry === "trigger") {
+    return triggerNodeConfig({ id, label: "Trigger", icon: "", position });
+  }
+
   if (nodeRegistry === "agent") {
     return agentNodeConfig({ id, label: "AI Agent", icon: "", position });
   }
@@ -25,18 +31,34 @@ export function createNodeFromRegistry({
   }
 
   const reg = getRegistration(nodeRegistry);
-  if (!reg) {
+  const meta = reg ? null : findMetadata(nodeRegistry);
+
+  if (!reg && !meta) {
     throw new Error(`No registration found for nodeRegistry: "${nodeRegistry}"`);
   }
 
-  if (nodeRegistry === "model") {
-    const node = modelNodeConfig({ id, label: reg.label, icon: resolveModelIcon(reg.label), position });
-    node.data.nodeRegistry = "model";
+  const label = reg?.label ?? meta!.label;
+  const nodeReg = reg?.nodeRegistry ?? meta!.nodeRegistry;
+
+  const MODEL_DEFAULTS: Record<string, string> = {
+    "model-openai": "gpt-4o",
+    "model-anthropic": "claude-3-5-sonnet",
+    "model-gemini": "gemini-1.5-pro",
+    "model-deepseek": "deepseek-chat",
+    "model-mistral": "mistral-large",
+    "model-qwen": "qwen2.5-72b",
+    "model-kimi": "kimi-latest",
+    "model-meta": "llama-3.1-70b",
+  };
+
+  if (nodeRegistry === "model" || nodeRegistry.startsWith("model-")) {
+    const node = modelNodeConfig({ id, label, icon: resolveModelIcon(label), position });
+    node.data.config = { ...node.data.config, modelName: MODEL_DEFAULTS[nodeRegistry] || "" };
     return node;
   }
 
   return toolNodeConfig(
-    { id, label: reg.label, icon: resolveToolIcon(reg.nodeRegistry), position },
-    { name: reg.label, nodeRegistry: reg.nodeRegistry, config: {} },
+    { id, label, icon: resolveToolIcon(nodeReg), position },
+    { name: label, nodeRegistry: nodeReg, config: {} },
   );
 }

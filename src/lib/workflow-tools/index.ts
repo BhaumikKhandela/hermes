@@ -6,60 +6,59 @@ import { createWebscraperTool } from "./tools/webscraper";
 import { createMemoryTool } from "./tools/memory";
 import { createEmbeddingTool } from "./tools/embedding";
 import { createVectorDBTool } from "./tools/vectorDB";
-import { createRetrieverTool } from "./tools/retriever";
 import { createImageGeneratorTool } from "./tools/imageGeneration";
 import { createImageReaderTool } from "./tools/imageReader";
 import { createImageEditorTool } from "./tools/imageEditor";
-import { createSheetTool, createReadSheetTool } from "./tools/sheets";
+import { createSheetTool } from "./tools/sheets";
+import { createNotionTool } from "./tools/notion";
 import { createCalendarTool } from "./tools/calendar";
 import { createEmailTool } from "./tools/email";
 import { createChartTool } from "./tools/charts";
 import { createPostgresTool, createMySQLTool, createMongoDBTool } from "./tools/database";
 
 register({
-  nodeRegistry: "model", factory: createModelTool, category: "ai", label: "Model", description: "Call an LLM for reasoning and generation", icon: "brain",
+  nodeRegistry: "model-openai", factory: createModelTool, category: "ai", label: "OpenAI", description: "GPT-4o and GPT-4o-mini models", icon: "openai",
   featured: true,
-  credentialRequirement: { providers: ["openai", "anthropic", "gemini"], authMethods: ["apiKey"] },
-  configFields: [
-    { key: "modelName", label: "Model Name", type: "text", placeholder: "gpt-4o, claude-3-5-sonnet, gemini-1.5-pro", required: false },
-  ],
+  credentialRequirement: { providers: ["openai"], authMethods: ["apiKey"] },
+  configFields: [{ key: "modelName", label: "Model Name", type: "text", defaultValue: "gpt-4o", required: false }],
 });
-
 register({
-  nodeRegistry: "search", factory: createSearchTool, category: "data", label: "Search", description: "Google Custom Search web search", icon: "search",
+  nodeRegistry: "model-anthropic", factory: createModelTool, category: "ai", label: "Claude", description: "Claude 3.5 Sonnet and Haiku models", icon: "claude",
   featured: true,
-  credentialRequirement: { providers: ["google"], authMethods: ["apiKey"] },
-  configFields: [],
+  credentialRequirement: { providers: ["anthropic"], authMethods: ["apiKey"] },
+  configFields: [{ key: "modelName", label: "Model Name", type: "text", defaultValue: "claude-3-5-sonnet", required: false }],
 });
-
 register({
-  nodeRegistry: "webscraper", factory: createWebscraperTool, category: "data", label: "Web Scraper", description: "Scrape web pages with Firecrawl", icon: "globe",
-  credentialRequirement: { providers: ["firecrawl"], authMethods: ["apiKey"] },
-  configFields: [],
-});
-
-register({
-  nodeRegistry: "memory", factory: createMemoryTool, category: "storage", label: "Memory", description: "Persistent key-value memory store", icon: "database",
+  nodeRegistry: "model-gemini", factory: createModelTool, category: "ai", label: "Gemini", description: "Gemini 1.5 Pro and Flash models", icon: "gemini",
   featured: true,
+  credentialRequirement: { providers: ["gemini"], authMethods: ["apiKey"] },
+  configFields: [{ key: "modelName", label: "Model Name", type: "text", defaultValue: "gemini-1.5-pro", required: false }],
+});
+register({
+  nodeRegistry: "model-deepseek", factory: createModelTool, category: "ai", label: "DeepSeek", description: "DeepSeek Chat and Coder models", icon: "deepseek",
+  credentialRequirement: { providers: ["deepseek"], authMethods: ["apiKey"] },
+  configFields: [{ key: "modelName", label: "Model Name", type: "text", defaultValue: "deepseek-chat", required: false }],
+});
+register({
+  nodeRegistry: "model-mistral", factory: createModelTool, category: "ai", label: "Mistral", description: "Mistral Large and Small models", icon: "mistral",
+  credentialRequirement: { providers: ["mistral"], authMethods: ["apiKey"] },
+  configFields: [{ key: "modelName", label: "Model Name", type: "text", defaultValue: "mistral-large", required: false }],
+});
+register({
+  nodeRegistry: "memory", factory: createMemoryTool, category: "storage", label: "Redis", description: "Redis-backed persistent key-value store with TTL support", icon: "redis",
+  featured: true,
+  credentialRequirement: { providers: ["redis"], authMethods: ["connectionString"] },
   configFields: [],
 });
 
 register({
   nodeRegistry: "embedding", factory: createEmbeddingTool, category: "ai", label: "Embedding", description: "Convert text to vector embeddings", icon: "vector",
   credentialRequirement: { providers: ["openai"], authMethods: ["apiKey"] },
-  configFields: [
-    { key: "modelName", label: "Model", type: "text", placeholder: "text-embedding-3-small", required: false },
-  ],
 });
 
 register({
-  nodeRegistry: "vectorDB", factory: createVectorDBTool, category: "storage", label: "Vector DB", description: "Query and upsert Pinecone vectors", icon: "layers",
+  nodeRegistry: "vectorDB", factory: createVectorDBTool, category: "storage", label: "Pinecone", description: "Query, upsert, or delete vectors in a Pinecone index", icon: "pinecone",
   credentialRequirement: { providers: ["pinecone"], authMethods: ["apiKey"] },
-  configFields: [],
-});
-
-register({
-  nodeRegistry: "retriever", factory: createRetrieverTool, category: "data", label: "Retriever", description: "Semantic document retrieval", icon: "file-text",
   configFields: [],
 });
 
@@ -82,38 +81,27 @@ register({
 });
 
 register({
-  nodeRegistry: "sheet", factory: createSheetTool, category: "integration", label: "Sheet", description: "Write data to Google Sheets", icon: "table",
+  nodeRegistry: "sheet", factory: createSheetTool, category: "integration", label: "Sheet", description: "Read or write data to Google Sheets", icon: "table",
   credentialRequirement: { providers: ["google-sheets"], authMethods: ["apiKey", "serviceAccount"] },
-  configFields: [
-    { key: "spreadsheetId", label: "Spreadsheet ID", type: "text", placeholder: "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE", required: true },
-    { key: "range", label: "Range", type: "text", placeholder: "Sheet1!A1:A10", required: true },
-  ],
+  configFields: [],
 });
 
 register({
-  nodeRegistry: "readSheet", factory: createReadSheetTool, category: "integration", label: "Read Sheet", description: "Read data from Google Sheets", icon: "table",
-  credentialRequirement: { providers: ["google-sheets"], authMethods: ["apiKey", "serviceAccount"] },
-  configFields: [
-    { key: "spreadsheetId", label: "Spreadsheet ID", type: "text", placeholder: "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE", required: true },
-    { key: "range", label: "Range", type: "text", placeholder: "Sheet1!A1:B10", required: true },
-  ],
-});
-
-register({
-  nodeRegistry: "calendarEvent", factory: createCalendarTool, category: "integration", label: "Calendar", description: "Create Google Calendar events", icon: "calendar",
+  nodeRegistry: "calendarEvent", factory: createCalendarTool, category: "integration", label: "Calendar", description: "Create Google Calendar events with configurable defaults", icon: "calendar",
   credentialRequirement: { providers: ["google-calendar"], authMethods: ["serviceAccount"] },
-  configFields: [
-    { key: "summary", label: "Default Summary", type: "text", placeholder: "Meeting", required: false },
-  ],
+  configFields: [],
+});
+
+register({
+  nodeRegistry: "notion", factory: createNotionTool, category: "integration", label: "Notion", description: "Query, create, update, and retrieve Notion pages and databases", icon: "notion",
+  credentialRequirement: { providers: ["notion"], authMethods: ["apiKey"] },
+  configFields: [],
 });
 
 register({
   nodeRegistry: "sendMail", factory: createEmailTool, category: "communication", label: "Send Mail", description: "Send emails via SMTP", icon: "mail",
   featured: true,
   credentialRequirement: { providers: ["smtp"], authMethods: ["smtp"] },
-  configFields: [
-    { key: "to", label: "Default Recipient", type: "text", placeholder: "user@example.com", required: false },
-  ],
 });
 
 register({

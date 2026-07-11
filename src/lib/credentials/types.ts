@@ -8,10 +8,13 @@ export const CredentialProviders = [
   "pinecone",
   "firecrawl",
   "bluesmind",
+  "tavily",
   "smtp",
   "postgres",
   "mysql",
   "mongodb",
+  "redis",
+  "notion",
 ] as const;
 
 export const AuthMethods = [

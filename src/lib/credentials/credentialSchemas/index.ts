@@ -113,6 +113,22 @@ const credentialSchemas: CredentialSchema[] = [
     ],
   },
   {
+    provider: "tavily",
+    authMethod: "apiKey",
+    fields: [
+      { key: "apiKey", label: "Tavily API Key", type: "password", placeholder: "tvly-...", required: true },
+    ],
+    testAction: "search test query",
+  },
+  {
+    provider: "redis",
+    authMethod: "connectionString",
+    fields: [
+      { key: "url", label: "Redis Connection URL", type: "password", placeholder: "redis://:password@host:6379/0", required: true },
+    ],
+    testAction: "PING",
+  },
+  {
     provider: "smtp",
     authMethod: "smtp",
     fields: [
@@ -154,5 +170,13 @@ const credentialSchemas: CredentialSchema[] = [
       { key: "uri", label: "Connection URI", type: "password", placeholder: "mongodb+srv://user:pass@cluster.mongodb.net/db", required: true },
     ],
     testAction: "ping",
+  },
+  {
+    provider: "notion",
+    authMethod: "apiKey",
+    fields: [
+      { key: "apiKey", label: "Internal Integration Secret", type: "password", placeholder: "ntn_...", required: true },
+    ],
+    testAction: "search across workspace",
   },
 ];

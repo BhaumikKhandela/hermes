@@ -55,6 +55,29 @@ export function toolNodeConfig(props: nodeConfigProps, configProps: any) {
             },
           ],
         },
+        {
+          // sequential input from previous node
+          name: "left",
+          type: "target",
+          LinkTo: [
+            { nodeName: "triggerNode", handlePosition: "right" },
+            { nodeName: "agent", handlePosition: "right" },
+            { nodeName: "subAgent", handlePosition: "right" },
+            { nodeName: "tool", handlePosition: "right" },
+            { nodeName: "modelNode", handlePosition: "right" },
+          ],
+        },
+        {
+          // sequential output to next node
+          name: "right",
+          type: "source",
+          LinkTo: [
+            { nodeName: "agent", handlePosition: "left" },
+            { nodeName: "subAgent", handlePosition: "left" },
+            { nodeName: "tool", handlePosition: "left" },
+            { nodeName: "modelNode", handlePosition: "left" },
+          ],
+        },
       ],
     },
   } as any;
