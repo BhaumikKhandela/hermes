@@ -9,15 +9,15 @@ export const Tabs = ({ activeTab, setActiveTab }: TabsProps) => {
   const tabs = ["Visual Editor", "Execute"];
 
   return (
-    <div className="flex items-center px-4 border-b border-slate-200 h-11 shrink-0 bg-white">
+    <div className="flex items-center px-4 border-b border-[#E7E7E7] h-11 shrink-0 bg-white">
       {tabs.map((tab) => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab)}
-          className={`px-4 h-full text-sm font-medium border-b-2 transition-colors ${
+          className={`px-4 h-full text-[13px] font-semibold border-b-2 transition-colors ${
             activeTab === tab
-              ? "border-red-500 text-slate-900"
-              : "border-transparent text-slate-500 hover:text-slate-700"
+              ? "border-[#5B5CEB] text-[#111827]"
+              : "border-transparent text-[#6B7280] hover:text-[#111827]"
           }`}
         >
           {tab}

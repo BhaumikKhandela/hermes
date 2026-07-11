@@ -77,48 +77,48 @@ export function NodeHoverActions({ id, children }: Props) {
         <div className="absolute -top-9 right-0 flex items-center gap-1 z-50 pointer-events-auto">
           <button
             onClick={handleSettings}
-            className="flex items-center justify-center w-7 h-7 rounded-md bg-white border border-slate-200 shadow-md hover:bg-slate-50 transition-colors"
+            className="flex items-center justify-center w-7 h-7 rounded-xl bg-white border border-[#E7E7E7] shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:bg-[#F5F5F5] hover:border-[#D1D5DB] transition"
             title="Configure"
           >
-            <Settings className="w-3.5 h-3.5 text-slate-600" />
+            <Settings className="w-3.5 h-3.5 text-[#6B7280]" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
-            className="flex items-center justify-center w-7 h-7 rounded-md bg-white border border-slate-200 shadow-md hover:bg-red-50 hover:border-red-200 transition-colors"
+            className="flex items-center justify-center w-7 h-7 rounded-xl bg-white border border-[#E7E7E7] shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:bg-[#FEF2F2] hover:border-[#FCA5A5] transition"
             title="Delete"
           >
-            <Trash2 className="w-3.5 h-3.5 text-red-500" />
+            <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" />
           </button>
         </div>
       )}
 
       {showConfirm && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-[1px] rounded-sm pointer-events-auto">
-          <div className="bg-white border border-slate-200 rounded-lg shadow-2xl p-4 w-56">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/90 rounded-2xl pointer-events-auto">
+          <div className="bg-white rounded-2xl p-5 w-56 border border-[#E7E7E7] shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-slate-900">
+              <h4 className="text-sm font-semibold text-[#111827]">
                 Delete node?
               </h4>
               <button
                 onClick={(e) => { e.stopPropagation(); setShowConfirm(false); }}
-                className="p-0.5 rounded hover:bg-slate-100 transition-colors"
+                className="p-0.5 rounded-xl hover:bg-[#F5F5F5] transition"
               >
-                <X className="w-3.5 h-3.5 text-slate-400" />
+                <X className="w-3.5 h-3.5 text-[#6B7280]" />
               </button>
             </div>
-            <p className="text-xs text-slate-500 mb-4">
+            <p className="text-xs text-[#6B7280] mb-4">
               This action cannot be undone.
             </p>
             <div className="flex gap-2">
               <button
                 onClick={(e) => { e.stopPropagation(); setShowConfirm(false); }}
-                className="flex-1 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
+                className="flex-1 px-3 py-1.5 text-xs font-medium text-[#6B7280] bg-[#F5F5F5] rounded-xl hover:bg-[#E7E7E7] transition"
               >
                 Cancel
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+                className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-[#EF4444] rounded-xl hover:bg-[#DC2626] transition"
               >
                 Delete
               </button>

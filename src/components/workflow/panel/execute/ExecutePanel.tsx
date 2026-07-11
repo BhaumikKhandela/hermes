@@ -113,20 +113,20 @@ const ExecutePanel = ({
   const isRunning = runStatus === "queuing" || runStatus === "queued" || runStatus === "running";
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50">
+    <div className="flex-1 flex flex-col bg-[#F6F7FB]">
       <div className="flex-1 flex flex-col gap-6 p-8 max-w-2xl mx-auto w-full">
         <div className="text-center space-y-1">
-          <h2 className="text-xl font-semibold text-slate-800">
+          <h2 className="text-[26px] font-bold text-[#111827]">
             Execute Workflow
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-[13px] text-[#6B7280]">
             Enter a prompt and run your configured agents.
           </p>
         </div>
 
         {/* Input */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">
+          <label className="text-sm font-semibold text-[#111827]">
             Prompt
           </label>
           <Textarea
@@ -135,7 +135,7 @@ const ExecutePanel = ({
             placeholder="e.g. Find the latest news about AI and summarize it..."
             rows={4}
             disabled={isRunning}
-            className="resize-none"
+            className="resize-none bg-[#F5F5F5] border-[#E7E7E7] rounded-xl focus:bg-white focus:ring-2 focus:ring-[rgba(91,92,235,0.15)] placeholder:text-[#6B7280]"
           />
         </div>
 
@@ -144,7 +144,7 @@ const ExecutePanel = ({
           onClick={handleRun}
           disabled={isRunning || !input.trim()}
           size="lg"
-          className="w-full"
+          className="w-full rounded-xl h-10"
         >
           {runStatus === "queuing" && (
             <Loader2 size={18} className="animate-spin mr-2" />
@@ -170,7 +170,7 @@ const ExecutePanel = ({
 
         {/* Status */}
         {runData && (
-          <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 text-sm">
+          <div className="bg-white rounded-2xl p-[18px] space-y-3 text-sm">
             {/* Status header */}
             <div className="flex items-center gap-2">
               {runStatus === "completed" && (

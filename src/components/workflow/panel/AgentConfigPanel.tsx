@@ -44,40 +44,101 @@ export function AgentConfigPanel({
   }, [nodeId, localInstructions, localDescription, dispatch, onClose]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium">Instructions</label>
-        <p className="text-xs text-muted-foreground">
-          Instructions for this agent. Used as the system prompt during execution.
-        </p>
+    <div className="space-y-10">
+      {/* Instructions */}
+      <section className="space-y-3">
+        <div className="space-y-1">
+          <h3 className="text-[13px] font-semibold text-[#111827]">
+            Instructions
+          </h3>
+          <p className="text-xs text-[#6B7280]">
+            Define how this agent should behave during execution.
+          </p>
+        </div>
+
+        {/* Prompt toolbar */}
+        <div className="flex gap-1">
+          <span className="text-[10px] font-medium text-[#6B7280] bg-[#F5F5F5] px-2 py-1 rounded-md hover:bg-[#E7E7E7] transition cursor-default">
+            Improve
+          </span>
+          <span className="text-[10px] font-medium text-[#6B7280] bg-[#F5F5F5] px-2 py-1 rounded-md hover:bg-[#E7E7E7] transition cursor-default">
+            Templates
+          </span>
+          <span className="text-[10px] font-medium text-[#6B7280] bg-[#F5F5F5] px-2 py-1 rounded-md hover:bg-[#E7E7E7] transition cursor-default">
+            Variables
+          </span>
+          <span className="text-[10px] font-medium text-[#6B7280] bg-[#F5F5F5] px-2 py-1 rounded-md hover:bg-[#E7E7E7] transition cursor-default">
+            Expand
+          </span>
+          <span className="text-[10px] font-medium text-[#6B7280] bg-[#F5F5F5] px-2 py-1 rounded-md hover:bg-[#E7E7E7] transition cursor-default">
+            Clear
+          </span>
+        </div>
+
         <Textarea
           value={localInstructions}
           onChange={(e) => setLocalInstructions(e.target.value)}
           placeholder="e.g. You are a senior software engineer..."
-          rows={6}
-          className="resize-none"
+          rows={12}
+          className="min-h-[240px] resize-y bg-[#F8F9FC] border border-[#E7E7E7] rounded-xl p-5 text-sm leading-relaxed text-[#111827] placeholder:text-[#9CA3AF] focus:bg-white focus:ring-2 focus:ring-[rgba(91,92,235,0.15)] focus:border-[#5B5CEB] transition-all duration-150"
         />
-      </div>
+      </section>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium">Role Description</label>
-        <p className="text-xs text-muted-foreground">
-          Brief description of the agent's role and responsibilities.
-        </p>
-        <Textarea
-          value={localDescription}
-          onChange={(e) => setLocalDescription(e.target.value)}
-          placeholder="e.g. Analyze requirements and generate code"
-          rows={4}
-          className="resize-none"
-        />
-      </div>
+      
 
-      <div className="flex gap-2 pt-2">
-        <Button onClick={handleSave} className="flex-1">
+      {/* Attached Resources */}
+      <section className="space-y-3">
+        <div className="space-y-1">
+          <h3 className="text-[13px] font-semibold text-[#111827]">
+            Attached Resources
+          </h3>
+          <p className="text-xs text-[#6B7280]">
+            Models, memory, storage, and integrations are provided through connected tool nodes.
+          </p>
+        </div>
+
+        <div className="bg-[#F8F9FC] rounded-xl p-4 space-y-4">
+          <div className="space-y-1.5">
+            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">Models</h4>
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-[10px] font-medium text-[#9CA3AF] bg-white border border-[#E7E7E7] px-2 py-0.5 rounded-md">OpenAI</span>
+              <span className="text-[10px] font-medium text-[#9CA3AF] bg-white border border-[#E7E7E7] px-2 py-0.5 rounded-md">Anthropic</span>
+              <span className="text-[10px] font-medium text-[#9CA3AF] bg-white border border-[#E7E7E7] px-2 py-0.5 rounded-md">Gemini</span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">Memory</h4>
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-[10px] font-medium text-[#9CA3AF] bg-white border border-[#E7E7E7] px-2 py-0.5 rounded-md">Vector Store</span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">Storage</h4>
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-[10px] font-medium text-[#9CA3AF] bg-white border border-[#E7E7E7] px-2 py-0.5 rounded-md">Database</span>
+              <span className="text-[10px] font-medium text-[#9CA3AF] bg-white border border-[#E7E7E7] px-2 py-0.5 rounded-md">File Storage</span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">Integrations</h4>
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-[10px] font-medium text-[#9CA3AF] bg-white border border-[#E7E7E7] px-2 py-0.5 rounded-md">Slack</span>
+              <span className="text-[10px] font-medium text-[#9CA3AF] bg-white border border-[#E7E7E7] px-2 py-0.5 rounded-md">Email</span>
+              <span className="text-[10px] font-medium text-[#9CA3AF] bg-white border border-[#E7E7E7] px-2 py-0.5 rounded-md">Web Search</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Actions */}
+      <div className="flex gap-2 pt-4">
+        <Button onClick={handleSave} className="flex-1 rounded-xl bg-[#5B5CEB] hover:bg-[#4C4DDA] text-white">
           Save
         </Button>
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose} className="rounded-xl text-[#6B7280] hover:text-[#111827] hover:bg-[#F5F5F5]">
           Cancel
         </Button>
       </div>

@@ -6,7 +6,7 @@ import {
 } from "@reduxjs/toolkit";
 
 export const fetchAgentTree = createAsyncThunk<
-  { agentTree: any; nodes: any },
+  { agentTree: any; nodes: any; edges: any },
   { projectId: string },
   { rejectValue: string }
 >("agent/fetchAgentTree", async ({ projectId }: { projectId: string }) =>

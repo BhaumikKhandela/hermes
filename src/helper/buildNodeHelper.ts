@@ -4,6 +4,7 @@ import { inputNodeConfig } from "@/lib/node-configs/inputNode";
 import { modelNodeConfig } from "@/lib/node-configs/modelNode";
 import { subAgentNodeConfig } from "@/lib/node-configs/subAgentNode";
 import { toolNodeConfig } from "@/lib/node-configs/toolNode";
+import { triggerNodeConfig } from "@/lib/node-configs/triggerNode";
 import { vectordbNodeConfig } from "@/lib/node-configs/vectorDbNode";
 import { resolveToolIcon, resolveModelIcon } from "@/lib/workflow-tools/iconMap";
 
@@ -16,6 +17,7 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
     vectordb: vectordbNodeConfig,
     subAgent: subAgentNodeConfig,
     model: modelNodeConfig,
+    trigger: triggerNodeConfig,
   };
 
   const newNodes: any[] = [];
@@ -28,6 +30,7 @@ export const buildNodesHelper = (nodesInput: any[], startId: number) => {
     let normalizedType = "";
 
     if (nodeType === "inputNode") normalizedType = "input";
+    else if (nodeType === "triggerNode") normalizedType = "trigger";
     else if (nodeType === "agent") normalizedType = "agent";
     else if (nodeType === "tool") normalizedType = "tool";
     else if (nodeType === "modelNode") normalizedType = "model";

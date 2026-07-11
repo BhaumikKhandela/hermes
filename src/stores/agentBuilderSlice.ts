@@ -18,6 +18,7 @@ interface CanvasSliceState {
   idCount: number;
   selectedNodeId: string | null;
   agentConnections: any[];
+  deletedEdgeKeys: string[];
 }
 
 const initialState: CanvasSliceState = {
@@ -26,6 +27,7 @@ const initialState: CanvasSliceState = {
   idCount: 1,
   selectedNodeId: null,
   agentConnections: [],
+  deletedEdgeKeys: [],
 };
 
 export const agentBuilderSlice = createSlice({
@@ -135,9 +137,32 @@ export const agentBuilderSlice = createSlice({
       state.nodes = action.payload ?? [];
     },
 
+    applyDBEdges(state, action: PayloadAction<Array<any> | undefined | null>) {
+      state.edges = action.payload ?? [];
+    },
+
     handleAutoConnect(state) {
       const generatedEdges = autoConnect(state.nodes, state.agentConnections);
-      state.edges = generatedEdges;
+      state.edges = generatedEdges.filter((e) => {
+        const key = `${e.source}:${e.sourceHandle}->${e.target}:${e.targetHandle}`;
+        return !state.deletedEdgeKeys.includes(key);
+      });
+    },
+
+    removeEdge(state, action: PayloadAction<string>) {
+      const edgeId = action.payload;
+      const edge = state.edges.find((e) => e.id === edgeId);
+      if (edge) {
+        const key = `${edge.source}:${edge.sourceHandle}->${edge.target}:${edge.targetHandle}`;
+        if (!state.deletedEdgeKeys.includes(key)) {
+          state.deletedEdgeKeys.push(key);
+        }
+      }
+      state.edges = state.edges.filter((e) => e.id !== edgeId);
+    },
+
+    clearDeletedEdgeKey(state, action: PayloadAction<string>) {
+      state.deletedEdgeKeys = state.deletedEdgeKeys.filter((k) => k !== action.payload);
     },
 
     setAgentConnections(state, action: PayloadAction<any[]>) {
@@ -168,6 +193,13 @@ export const agentBuilderSlice = createSlice({
       }
     },
 
+    renameNode(state, action: PayloadAction<{ id: string; label: string }>) {
+      const node = state.nodes.find((n) => n.id === action.payload.id);
+      if (node) {
+        node.data = { ...node.data, label: action.payload.label };
+      }
+    },
+
     addNodeFromPalette(
       state,
       action: PayloadAction<{ nodeRegistry: string; position?: { x: number; y: number } }>,
@@ -195,15 +227,19 @@ export const agentBuilderSlice = createSlice({
 export const {
   buildNodes,
   applyDBNodes,
+  applyDBEdges,
   onNodesChange,
   onEdgesChange,
   handleAutoConnect,
   setSelectedNode,
   updateNodeConfig,
   updateNodeCredential,
+  renameNode,
   addNodeFromPalette,
   setAgentConnections,
   removeNode,
+  removeEdge,
+  clearDeletedEdgeKey,
 } = agentBuilderSlice.actions;
 
 export default agentBuilderSlice.reducer;

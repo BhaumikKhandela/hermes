@@ -1,152 +1,97 @@
 "use client";
 import { Handle, Position } from "@xyflow/react";
-import { useTheme } from "next-themes";
 import Image from "next/image";
-
-import { CpuIcon, PlusIcon } from "lucide-react";
-import { THEME } from "./nodeThemes";
+import { CpuIcon } from "lucide-react";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/stores";
 import { NodeHoverActions } from "./NodeHoverActions";
 
-export function AgentNode({ data, id }: any) {
-  const { theme, resolvedTheme } = useTheme();
-  const isDark = (theme === "system" ? resolvedTheme : theme) === "dark";
+export function AgentNode({ data, id, selected }: any) {
+  const edges = useSelector((state: RootState) => state.builder.edges);
 
-  // Common Zapier-style handle classes (WITH ! preserved)
-  const handleBaseClass = `
-    !w-8 !h-8 !flex !items-center !justify-center !transition-all !duration-200
-    !border-2 !shadow-xl !rounded-full !z-50
-    ${
-      isDark
-        ? "!bg-[#0f172a] !border-slate-700 hover:!border-blue-500"
-        : "!bg-white !border-slate-200 hover:!border-blue-500"
-    }
-  `;
+  const isHandleConnected = (handleId: string, type: "source" | "target") =>
+    edges.some((e: any) =>
+      (type === "source" && e.source === id && e.sourceHandle === handleId) ||
+      (type === "target" && e.target === id && e.targetHandle === handleId)
+    );
+
+  const handleClass = (handleId: string, type: "source" | "target") =>
+    `!w-3 !h-3 !rounded-full !border-2 !transition-all !duration-150 ${
+      isHandleConnected(handleId, type)
+        ? "!bg-[#5B5CEB] !border-[#5B5CEB]"
+        : "!bg-white !border-[#D1D5DB] hover:!bg-[#5B5CEB] hover:!border-[#5B5CEB] hover:!scale-125"
+    }`;
 
   return (
     <NodeHoverActions id={id}>
-    <div
-      style={{ borderColor: THEME.agentBorder }}
-      className={`relative min-w-[240px] rounded-sm border transition-all duration-500
-        ${
-          isDark
-            ? "bg-slate-950 border-slate-800 shadow-[0_0_20px_rgba(0,0,0,0.5)]"
-            : "bg-white border-slate-200 shadow-lg"
-        }
-        ${
-          data.running
-            ? "ring-2 ring-blue-500 ring-offset-4 ring-offset-transparent"
-            : ""
-        }
-      `}
-    >
-      {/* Header */}
       <div
-        className={`flex items-center justify-between px-4 py-2 border-b ${
-          isDark
-            ? "bg-slate-900/50 border-slate-800"
-            : "bg-slate-50 border-slate-200"
-        }`}
+        className={`relative min-w-[280px] bg-white rounded-2xl border p-6 transition-all duration-200 ease-out
+          ${selected
+            ? "ring-1 ring-[#5B5CEB]/30 border-[#5B5CEB] bg-[#F5F5FF]"
+            : "border-[#E7E7E7] shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-[#D1D5DB] hover:-translate-y-[1px]"
+          }`}
       >
-        <div className="flex items-center gap-2">
-          <div
-            className={`p-1 rounded ${
-              isDark ? "bg-blue-500/10" : "bg-blue-50"
-            }`}
-          >
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-12 h-12 rounded-xl bg-[#EEF2FF] flex items-center justify-center shrink-0">
             {data.icon ? (
-              <div className="relative w-4 h-4">
-                <Image src={data.icon} alt="" fill className="object-contain" sizes="16px" />
+              <div className="relative w-[22px] h-[22px]">
+                <Image src={data.icon} alt="" fill className="object-contain" sizes="22px" />
               </div>
             ) : (
-              <CpuIcon
-                className={`w-3.5 h-3.5 ${
-                  data.running
-                    ? "text-blue-500 animate-pulse"
-                    : "text-slate-500"
-                }`}
-              />
+              <CpuIcon className="w-[22px] h-[22px] text-[#5B5CEB]" />
             )}
           </div>
-
-          <span
-            className={`text-[10px] font-bold uppercase tracking-widest ${
-              isDark ? "text-slate-400" : "text-slate-500"
-            }`}
-          >
-            Manager Core
+          <span className="text-[11px] font-medium text-[#6B7280] bg-[#F5F5F5] px-2 py-0.5 rounded-full">
+            Agent
           </span>
         </div>
 
-        <div
-          className={`w-2 h-2 rounded-full ${
-            data.running
-              ? "bg-green-500 animate-ping"
-              : "bg-slate-600"
-          }`}
-        />
-      </div>
-
-      {/* Body */}
-      <div className="p-5">
-        <h3
-          className={`text-base font-bold tracking-tight ${
-            isDark ? "text-slate-100" : "text-slate-900"
-          }`}
-        >
-          {data.label || "System Orchestrator"}
+        <h3 className="text-base font-semibold text-[#111827] mb-1">
+          {data.label || "Agent"}
         </h3>
 
-        <p
-          className={`text-xs mt-1 font-medium ${
-            isDark ? "text-slate-400" : "text-slate-500"
-          }`}
-        >
-          {data.sub || data.meta?.model || "Standard LLM Intelligence"}
+        <p className="text-sm text-[#6B7280] font-normal">
+          {data.sub || data.meta?.model || "Reasoning agent"}
         </p>
-      </div>
 
-      {/* Input Handle */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="in"
-        className={handleBaseClass}
-        style={{ left: -18 }}
-      >
-        <PlusIcon className="w-4 h-4 text-blue-500" strokeWidth={3} />
-      </Handle>
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="in"
+          className={handleClass("in", "target")}
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "-6px",
+            transform: "translateY(-50%)",
+          }}
+        />
 
-      {/* Output Handle */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="out"
-        className={handleBaseClass}
-        style={{ right: -18 }}
-      >
-        <PlusIcon className="w-4 h-4 text-emerald-500" strokeWidth={3} />
-      </Handle>
-
-      {/* Bottom Tools Handle */}
-      <div className="absolute -bottom-[18px] left-1/2 -translate-x-1/2 flex flex-col items-center">
         <Handle
           type="source"
-          position={Position.Bottom}
-          id="tools"
-          className={handleBaseClass}
-        >
-          <PlusIcon className="w-4 h-4 text-purple-500" strokeWidth={3} />
-        </Handle>
+          position={Position.Right}
+          id="out"
+          className={handleClass("out", "source")}
+          style={{
+            position: "absolute",
+            top: "50%",
+            right: "-6px",
+            transform: "translateY(-50%)",
+          }}
+        />
 
-        <span
-          className={`text-[9px] font-black uppercase mt-1 tracking-tight ${
-            isDark ? "text-slate-400" : "text-slate-500"
-          }`}
-        >
-          Tools
-        </span>
+        <div className="absolute -bottom-[18px] left-1/2 -translate-x-1/2 flex flex-col items-center">
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            id="tools"
+            className={handleClass("tools", "source")}
+          />
+          <span className="text-[9px] font-semibold uppercase mt-1.5 tracking-wider text-[#6B7280]">
+            Tools
+          </span>
+        </div>
       </div>
-    </div>
     </NodeHoverActions>
   );
 }

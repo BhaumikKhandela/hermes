@@ -4,6 +4,7 @@ import { InputNode } from "./InputNode";
 import { ModelNode } from "./ModelNode";
 import { SubAgentNode } from "./SubAgentNode";
 import { ToolNode } from "./ToolNode";
+import { TriggerNode } from "./TriggerNode";
 import { VectorDbNode } from "./VectorDbNode";
 
 export const nodeTypes = {
@@ -13,5 +14,6 @@ export const nodeTypes = {
     vectordbNode: VectorDbNode,
     embeddingModelNode: EmbeddingModelNode,
     subAgent: SubAgentNode,
-    modelNode: ModelNode
+    modelNode: ModelNode,
+    triggerNode: TriggerNode,
 }

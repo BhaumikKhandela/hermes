@@ -4,31 +4,19 @@ import { useState, useMemo } from "react";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/stores";
 import { addNodeFromPalette } from "@/stores/agentBuilderSlice";
-import { list } from "@/lib/workflow-tools/registry";
-import type { ToolRegistration, ToolCategory } from "@/lib/workflow-tools/types";
+import { toolMetadatas } from "@/lib/workflow-tools/metadata";
+import { resolveToolIcon } from "@/lib/workflow-tools/iconMap";
+import type { ToolMetadata } from "@/lib/workflow-tools/metadata";
+import type { ToolCategory } from "@/lib/workflow-tools/types";
 import {
   Bot,
   GitFork,
   Search,
   Star,
-  BrainCircuit,
-  Globe,
-  Database,
-  FunctionSquare,
-  Layers,
-  FileText,
-  Image,
-  Eye,
-  Edit3,
-  Table,
-  Calendar,
-  Mail,
-  BarChart3,
-  File,
-  FilePlus,
-  FileEdit,
+  Zap,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
 
 const CATEGORY_LABELS: Record<ToolCategory, string> = {
   ai: "AI",
@@ -38,28 +26,6 @@ const CATEGORY_LABELS: Record<ToolCategory, string> = {
   integration: "Integration",
   utility: "Utility",
 };
-
-const ICON_MAP: Record<string, any> = {
-  brain: BrainCircuit,
-  search: Search,
-  globe: Globe,
-  database: Database,
-  vector: FunctionSquare,
-  layers: Layers,
-  "file-text": FileText,
-  image: Image,
-  eye: Eye,
-  edit: Edit3,
-  table: Table,
-  calendar: Calendar,
-  mail: Mail,
-  "bar-chart": BarChart3,
-  file: File,
-  "file-plus": FilePlus,
-  "file-edit": FileEdit,
-};
-
-const allTools = list().filter((t) => !t.hidden);
 
 const categories: ToolCategory[] = [
   "ai",
@@ -74,11 +40,9 @@ function ToolCard({
   reg,
   onClick,
 }: {
-  reg: ToolRegistration;
+  reg: ToolMetadata;
   onClick: () => void;
 }) {
-  const IconComponent = ICON_MAP[reg.icon || ""];
-
   const onDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData("application/node-registry", reg.nodeRegistry);
     e.dataTransfer.effectAllowed = "move";
@@ -89,27 +53,29 @@ function ToolCard({
       draggable
       onDragStart={onDragStart}
       onClick={onClick}
-      className="w-full flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50 hover:border-slate-300 transition text-left"
+      className="w-full flex items-center gap-3 bg-white rounded-2xl p-[18px] hover:-translate-y-[2px] transition-all duration-200 ease-out text-left"
     >
-      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-        {IconComponent ? (
-          <IconComponent size={16} className="text-slate-600" />
-        ) : (
-          <FunctionSquare size={16} className="text-slate-400" />
-        )}
+      <div className="w-11 h-11 rounded-xl bg-[#F5F5F5] flex items-center justify-center shrink-0">
+        <Image
+          src={resolveToolIcon(reg.nodeRegistry)}
+          alt={reg.label}
+          width={22}
+          height={22}
+          className="object-contain"
+        />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium text-slate-800">
+          <span className="text-sm font-semibold text-[#111827]">
             {reg.label}
           </span>
           {reg.beta && (
-            <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#FEF3C7] text-[#F59E0B] font-medium">
               Beta
             </span>
           )}
         </div>
-        <p className="text-xs text-slate-500 truncate mt-0.5">
+        <p className="text-[13px] text-[#6B7280] truncate mt-0.5 font-normal">
           {reg.description}
         </p>
       </div>
@@ -133,7 +99,7 @@ const RightPanel = ({
   );
 
   const filteredTools = useMemo(() => {
-    let tools = allTools;
+    let tools = toolMetadatas;
 
     if (activeCategory) {
       tools = tools.filter((t) => t.category === activeCategory);
@@ -153,7 +119,7 @@ const RightPanel = ({
   }, [activeCategory, search]);
 
   const featuredTools = useMemo(
-    () => allTools.filter((t) => t.featured),
+    () => toolMetadatas.filter((t) => t.featured),
     [],
   );
 
@@ -167,16 +133,35 @@ const RightPanel = ({
 
   return (
     <aside
-      className={`relative bg-white border-l border-slate-200 shrink-0 overflow-hidden transition-all duration-300
-      ${isRightPanelOpen ? "w-[340px]" : "w-0 border-none opacity-0"}`}
+      className={`relative bg-white border-l border-[#E7E7E7] shrink-0 overflow-hidden transition-all duration-300
+      ${isRightPanelOpen ? "w-[380px]" : "w-0 border-none opacity-0"}`}
     >
-      <div className="h-full overflow-y-auto px-4 py-4">
+      <div className="h-full overflow-y-auto px-[28px] py-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-slate-800 text-sm">Nodes</h3>
+          <h3 className="text-[13px] uppercase tracking-wider font-bold text-[#6B7280]">Nodes</h3>
         </div>
 
+        {/* Trigger Node */}
+        <button
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.setData("application/node-registry", "trigger");
+            e.dataTransfer.effectAllowed = "move";
+          }}
+          onClick={() => handleAddNode("trigger")}
+          className="w-full flex items-center gap-3 bg-white rounded-2xl p-[18px] hover:-translate-y-[2px] transition-all duration-200 ease-out text-left mb-3"
+        >
+          <div className="w-11 h-11 rounded-xl bg-[#EEF2FF] flex items-center justify-center shrink-0">
+            <Zap size={20} className="text-[#5B5CEB]" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-[#111827]">Trigger</div>
+            <div className="text-[13px] text-[#6B7280]">Starts workflow</div>
+          </div>
+        </button>
+
         {/* Structural Nodes */}
-        <div className="flex gap-2 mb-4">
+        <div className="space-y-3 mb-6">
           <button
             draggable
             onDragStart={(e) => {
@@ -184,10 +169,15 @@ const RightPanel = ({
               e.dataTransfer.effectAllowed = "move";
             }}
             onClick={() => handleAddNode("agent")}
-            className="flex-1 flex items-center justify-center gap-2 border border-slate-200 rounded-xl p-3 hover:bg-slate-50 transition text-sm font-medium text-slate-700"
+            className="w-full flex items-center gap-3 bg-white rounded-2xl p-[18px] hover:-translate-y-[2px] transition-all duration-200 ease-out text-left"
           >
-            <Bot size={16} />
-            Agent
+            <div className="w-11 h-11 rounded-xl bg-[#F5F5F5] flex items-center justify-center shrink-0">
+              <Bot size={20} className="text-[#6B7280]" />
+                </div>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-[#111827]">Agent</div>
+              <div className="text-[13px] text-[#6B7280]">Reasoning agent</div>
+            </div>
           </button>
           <button
             draggable
@@ -196,42 +186,50 @@ const RightPanel = ({
               e.dataTransfer.effectAllowed = "move";
             }}
             onClick={() => handleAddNode("subAgent")}
-            className="flex-1 flex items-center justify-center gap-2 border border-slate-200 rounded-xl p-3 hover:bg-slate-50 transition text-sm font-medium text-slate-700"
+            className="w-full flex items-center gap-3 bg-white rounded-2xl p-[18px] hover:-translate-y-[2px] transition-all duration-200 ease-out text-left"
           >
-            <GitFork size={16} />
-            SubAgent
+            <div className="w-11 h-11 rounded-xl bg-[#ECFDF5] flex items-center justify-center shrink-0">
+              <GitFork size={20} className="text-[#10B981]" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-[#111827]">SubAgent</div>
+              <div className="text-[13px] text-[#6B7280]">Reusable worker</div>
+            </div>
           </button>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-slate-200 mb-4" />
-
         {/* Tools Section */}
-        <div className="space-y-3">
-          <h3 className="font-semibold text-slate-800 text-sm">Tools</h3>
+        <div className="space-y-4 mt-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[13px] uppercase tracking-wider font-bold text-[#6B7280]">Tools</h3>
+            <span className="text-[11px] text-[#6B7280]">{toolMetadatas.length} available</span>
+          </div>
 
           {/* Search */}
           <div className="relative">
             <Search
               size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B7280]"
             />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search nodes..."
-              className="pl-9 h-9 text-sm"
+              className="pl-10 pr-9 h-9 text-sm bg-[#F8F9FC] border border-[#E7E7E7] rounded-xl focus:bg-white focus:ring-2 focus:ring-[rgba(91,92,235,0.15)] placeholder:text-[#6B7280] transition-all duration-150"
             />
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-[#6B7280] bg-[#F3F4F6] px-1.5 py-0.5 rounded-md">
+              ⌘K
+            </kbd>
           </div>
 
-          {/* Category Pills */}
-          <div className="flex gap-1.5 flex-wrap">
+          {/* Category Pills (Segmented Control) */}
+          <div className="flex gap-1 flex-wrap">
             <button
               onClick={() => setActiveCategory(null)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-150 ${
                 activeCategory === null
-                  ? "bg-red-500 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  ? "text-[#5B5CEB] bg-[#F5F5FF] border border-[#C7C8FF]"
+                  : "text-[#6B7280] bg-transparent hover:bg-[#F5F5F5]"
               }`}
             >
               All
@@ -242,10 +240,10 @@ const RightPanel = ({
                 onClick={() =>
                   setActiveCategory(activeCategory === cat ? null : cat)
                 }
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-150 ${
                   activeCategory === cat
-                    ? "bg-red-500 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "text-[#5B5CEB] bg-[#F5F5FF] border border-[#C7C8FF]"
+                    : "text-[#6B7280] bg-transparent hover:bg-[#F5F5F5]"
                 }`}
               >
                 {CATEGORY_LABELS[cat]}
@@ -258,9 +256,9 @@ const RightPanel = ({
             {/* Popular section — only when no filter */}
             {!activeCategory && !search && featuredTools.length > 0 && (
               <div className="space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <Star size={12} className="fill-amber-400 text-amber-400" />
-                  Popular
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
+                  <Star size={12} className="text-[#F59E0B]" />
+                  Popular tools
                 </div>
                 <div className="space-y-2">
                   {featuredTools.map((reg) => (
@@ -286,20 +284,20 @@ const RightPanel = ({
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 text-center py-4">
+                <p className="text-xs text-[#6B7280] text-center py-4">
                   No tools match your search.
                 </p>
               )
             ) : (
               /* Category sections when no category is selected */
               categories.map((cat) => {
-                const catTools = allTools.filter(
+                const catTools = toolMetadatas.filter(
                   (t) => t.category === cat && !t.featured,
                 );
                 if (catTools.length === 0) return null;
                 return (
                   <div key={cat} className="space-y-2">
-                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider pt-1">
+                    <div className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider pt-1">
                       {CATEGORY_LABELS[cat]}
                     </div>
                     {catTools.map((reg) => (
@@ -315,6 +313,16 @@ const RightPanel = ({
             )}
           </div>
         </div>
+
+        {/* Empty state hint */}
+        {!search && !activeCategory && (
+          <div className="mt-8">
+            <p className="text-[11px] text-[#6B7280] text-center leading-relaxed">
+              Drag nodes onto the canvas<br />
+              to build your workflow
+            </p>
+          </div>
+        )}
       </div>
     </aside>
   );

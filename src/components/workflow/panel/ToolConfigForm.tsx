@@ -1,7 +1,6 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -37,12 +36,12 @@ export function ToolConfigForm({
     <div className="flex flex-col gap-4">
       {authMethods && authMethods.length > 0 && (
         <div className="flex flex-col gap-1.5">
-          <Label>Auth Method</Label>
+          <label className="text-[13px] font-semibold text-[#111827]">Auth Method</label>
           <Select
             value={selectedAuth || authMethods[0]?.key || ""}
             onValueChange={(v) => onAuthChange?.(v)}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full rounded-xl bg-[#F5F5F5] border-[#E7E7E7]">
               <SelectValue placeholder="Select auth method" />
             </SelectTrigger>
             <SelectContent>
@@ -54,7 +53,7 @@ export function ToolConfigForm({
             </SelectContent>
           </Select>
           {authMethods.find((m) => m.key === selectedAuth)?.description && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#6B7280]">
               {authMethods.find((m) => m.key === selectedAuth)?.description}
             </p>
           )}
@@ -86,7 +85,7 @@ function FieldRenderer({
     case "boolean":
       return (
         <div className="flex items-center justify-between gap-2">
-          <Label>{field.label}</Label>
+          <label className="text-[13px] font-semibold text-[#111827]">{field.label}</label>
           <Switch
             checked={!!value}
             onCheckedChange={(v) => onChange(v)}
@@ -98,12 +97,12 @@ function FieldRenderer({
     case "select":
       return (
         <div className="flex flex-col gap-1.5">
-          <Label>{field.label}</Label>
+          <label className="text-[13px] font-semibold text-[#111827]">{field.label}</label>
           <Select
             value={String(value)}
             onValueChange={(v) => onChange(v)}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full rounded-xl bg-[#F5F5F5] border-[#E7E7E7]">
               <SelectValue placeholder={field.placeholder} />
             </SelectTrigger>
             <SelectContent>
@@ -115,7 +114,7 @@ function FieldRenderer({
             </SelectContent>
           </Select>
           {field.description && (
-            <p className="text-xs text-muted-foreground">{field.description}</p>
+            <p className="text-xs text-[#6B7280]">{field.description}</p>
           )}
         </div>
       );
@@ -123,15 +122,16 @@ function FieldRenderer({
     case "password":
       return (
         <div className="flex flex-col gap-1.5">
-          <Label>{field.label}</Label>
+          <label className="text-[13px] font-semibold text-[#111827]">{field.label}</label>
           <Input
             type="password"
             placeholder={field.placeholder}
             value={String(value)}
             onChange={(e) => onChange(e.target.value)}
+            className="rounded-xl bg-[#F5F5F5] border-[#E7E7E7] focus:bg-white focus:ring-2 focus:ring-[rgba(91,92,235,0.15)]"
           />
           {field.description && (
-            <p className="text-xs text-muted-foreground">{field.description}</p>
+            <p className="text-xs text-[#6B7280]">{field.description}</p>
           )}
         </div>
       );
@@ -139,15 +139,16 @@ function FieldRenderer({
     case "number":
       return (
         <div className="flex flex-col gap-1.5">
-          <Label>{field.label}</Label>
+          <label className="text-[13px] font-semibold text-[#111827]">{field.label}</label>
           <Input
             type="number"
             placeholder={field.placeholder}
             value={value === undefined || value === null ? "" : String(value)}
             onChange={(e) => onChange(e.target.value === "" ? field.defaultValue : Number(e.target.value))}
+            className="rounded-xl bg-[#F5F5F5] border-[#E7E7E7] focus:bg-white focus:ring-2 focus:ring-[rgba(91,92,235,0.15)]"
           />
           {field.description && (
-            <p className="text-xs text-muted-foreground">{field.description}</p>
+            <p className="text-xs text-[#6B7280]">{field.description}</p>
           )}
         </div>
       );
@@ -155,15 +156,16 @@ function FieldRenderer({
     default:
       return (
         <div className="flex flex-col gap-1.5">
-          <Label>{field.label}</Label>
+          <label className="text-[13px] font-semibold text-[#111827]">{field.label}</label>
           <Input
             type={field.type === "url" ? "url" : "text"}
             placeholder={field.placeholder}
             value={String(value)}
             onChange={(e) => onChange(e.target.value)}
+            className="rounded-xl bg-[#F5F5F5] border-[#E7E7E7] focus:bg-white focus:ring-2 focus:ring-[rgba(91,92,235,0.15)]"
           />
           {field.description && (
-            <p className="text-xs text-muted-foreground">{field.description}</p>
+            <p className="text-xs text-[#6B7280]">{field.description}</p>
           )}
         </div>
       );

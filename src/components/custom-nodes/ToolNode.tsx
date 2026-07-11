@@ -1,9 +1,10 @@
 "use client";
 
 import { Handle, Position } from "@xyflow/react";
-import { PlusIcon, TriangleAlert } from "lucide-react";
-import { useTheme } from "next-themes";
+import { TriangleAlert } from "lucide-react";
 import Image from "next/image";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/stores";
 import { getRegistration } from "@/lib/workflow-tools/registry";
 import { NodeHoverActions } from "./NodeHoverActions";
 
@@ -14,10 +15,28 @@ type ToolNodeData = {
   credentialId?: string | null;
 };
 
-export function ToolNode({ data, id }: { data: ToolNodeData; id: string }) {
-  const { theme, resolvedTheme } = useTheme();
-  const activeTheme = theme === "system" ? resolvedTheme : theme;
-  const isDark = activeTheme === "dark";
+export function ToolNode({ data, id, selected }: { data: ToolNodeData; id: string; selected?: boolean }) {
+  const edges = useSelector((state: RootState) => state.builder.edges);
+
+  const isHandleConnected = (handleId: string, type: "source" | "target") =>
+    edges.some((e: any) =>
+      (type === "source" && e.source === id && e.sourceHandle === handleId) ||
+      (type === "target" && e.target === id && e.targetHandle === handleId)
+    );
+
+  const handleClass = (handleId: string, type: "source" | "target") =>
+    `!w-2.5 !h-2.5 !rounded-full !border-2 !transition-all !duration-150 ${
+      isHandleConnected(handleId, type)
+        ? "!bg-[#5B5CEB] !border-[#5B5CEB]"
+        : "!bg-white !border-[#D1D5DB] hover:!bg-[#5B5CEB] hover:!border-[#5B5CEB] hover:!scale-125"
+    }`;
+
+  const toolInHandleClass = (handleId: string) =>
+    `!w-3 !h-3 !rounded-full !border-2 !transition-all !duration-150 ${
+      isHandleConnected(handleId, "target")
+        ? "!bg-[#F59E0B] !border-[#F59E0B]"
+        : "!bg-white !border-[#D1D5DB] hover:!bg-[#F59E0B] hover:!border-[#F59E0B] hover:!scale-125"
+    }`;
 
   const reg = data.nodeRegistry ? getRegistration(data.nodeRegistry) : null;
   const needsCredential = reg?.credentialRequirement !== undefined;
@@ -25,83 +44,80 @@ export function ToolNode({ data, id }: { data: ToolNodeData; id: string }) {
 
   return (
     <NodeHoverActions id={id}>
-    <div
-      className={`
-        relative group flex items-center gap-3 px-4 py-2.5
-        rounded-xl border transition-all duration-300 cursor-pointer
-        ${missingCredential ? "border-amber-400/60" : ""}
-        ${
-          isDark
-            ? "bg-slate-900/80 border-slate-700/50 backdrop-blur-md hover:border-blue-500/50"
-            : "bg-white/80 border-slate-200/80 backdrop-blur-md hover:border-blue-400"
-        }
-        shadow-sm hover:shadow-lg
-      `}
-    >
-      {/* Accent Left Border */}
-      <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-blue-500 rounded-r-full opacity-50 group-hover:opacity-100 transition-opacity" />
-
-      {/* Icon Section */}
-      {data.icon && (
-        <div className="relative w-6 h-6 flex-shrink-0">
-          <Image
-            src={data.icon}
-            alt={data.label}
-            fill
-            className="object-contain"
-            sizes="24px"
-          />
-        </div>
-      )}
-
-      {/* Text Section */}
-      <div className="flex flex-col">
-        <span
-          className={`text-[10px] uppercase tracking-wider font-bold opacity-50 ${
-            isDark ? "text-slate-400" : "text-slate-500"
+      <div
+        className={`relative bg-white rounded-2xl border transition-all duration-200 ease-out
+          ${selected
+            ? "ring-1 ring-[#5B5CEB]/30 border-[#5B5CEB] bg-[#F5F5FF]"
+            : "border-[#E7E7E7] shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-[#D1D5DB] hover:-translate-y-[1px]"
           }`}
-        >
-          Tool
-        </span>
-        <div className="flex items-center gap-1.5">
-          <span
-            className={`text-sm font-semibold leading-tight ${
-              isDark ? "text-slate-100" : "text-slate-800"
-            }`}
-          >
-            {data.label}
-          </span>
-          {missingCredential && (
-            <TriangleAlert size={13} className="text-amber-500 shrink-0" />
-          )}
-        </div>
-      </div>
-
-      {/* Zapier-Style SQUARE Handle */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="tool_in"
-        className={`
-          !w-6 !h-6 !flex !items-center !justify-center
-          !transition-all !duration-200 !shadow-md !z-50
-          !border-2 !rounded-md
-          ${
-            isDark
-              ? "!bg-slate-800 !border-slate-600 hover:!border-blue-500"
-              : "!bg-white !border-slate-200 hover:!border-blue-400"
-          }
-        `}
-        style={{ top: -12 }}
       >
-        <PlusIcon
-          className={`w-3 h-3 ${
-            isDark ? "text-slate-400" : "text-slate-500"
-          } group-hover:text-blue-500`}
-          strokeWidth={3}
+        <div className="flex items-center gap-2.5 p-3">
+          {data.icon && (
+            <div className="w-10 h-10 rounded-xl bg-[#FFF7ED] flex items-center justify-center shrink-0">
+              <div className="relative w-[18px] h-[18px]">
+                <Image
+                  src={data.icon}
+                  alt={data.label}
+                  fill
+                  className="object-contain"
+                  sizes="18px"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="text-[10px] font-medium text-[#6B7280] bg-[#F5F5F5] px-1.5 py-0.5 rounded-full">
+                Tool
+              </span>
+              {missingCredential && (
+                <TriangleAlert size={11} className="text-[#F59E0B] shrink-0" />
+              )}
+            </div>
+            <span className="text-sm font-semibold text-[#111827] leading-tight">
+              {data.label}
+            </span>
+          </div>
+        </div>
+
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="in"
+          className={handleClass("in", "target")}
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "-5px",
+            transform: "translateY(-50%)",
+          }}
         />
-      </Handle>
-    </div>
+
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="out"
+          className={handleClass("out", "source")}
+          style={{
+            position: "absolute",
+            top: "50%",
+            right: "-5px",
+            transform: "translateY(-50%)",
+          }}
+        />
+
+        <Handle
+          type="target"
+          position={Position.Top}
+          id="tool_in"
+          className={toolInHandleClass("tool_in")}
+          style={{
+            position: "absolute",
+            top: "-6px",
+          }}
+        />
+      </div>
     </NodeHoverActions>
   );
 }
