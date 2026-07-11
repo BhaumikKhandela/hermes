@@ -1,0 +1,300 @@
+import type { ToolCategory, ToolConfigField } from "./types";
+
+export type ToolMetadata = {
+  nodeRegistry: string;
+  category: ToolCategory;
+  label: string;
+  description: string;
+  icon: string;
+  featured?: boolean;
+  beta?: boolean;
+  credentialRequirement?: { providers: string[]; authMethods: string[] };
+  configFields?: ToolConfigField[];
+};
+
+export const toolMetadatas: ToolMetadata[] = [
+  {
+    nodeRegistry: "model-openai",
+    category: "ai",
+    label: "OpenAI",
+    description: "GPT-4o and GPT-4o-mini models",
+    icon: "openai",
+    featured: true,
+    credentialRequirement: { providers: ["openai"], authMethods: ["apiKey"] },
+    configFields: [
+      { key: "modelName", label: "Model Name", type: "text", placeholder: "gpt-4o", defaultValue: "gpt-4o", required: false },
+    ],
+  },
+  {
+    nodeRegistry: "model-anthropic",
+    category: "ai",
+    label: "Claude",
+    description: "Claude 3.5 Sonnet and Haiku models",
+    icon: "claude",
+    featured: true,
+    credentialRequirement: { providers: ["anthropic"], authMethods: ["apiKey"] },
+    configFields: [
+      { key: "modelName", label: "Model Name", type: "text", placeholder: "claude-3-5-sonnet", defaultValue: "claude-3-5-sonnet", required: false },
+    ],
+  },
+  {
+    nodeRegistry: "model-gemini",
+    category: "ai",
+    label: "Gemini",
+    description: "Gemini 1.5 Pro and Flash models",
+    icon: "gemini",
+    featured: true,
+    credentialRequirement: { providers: ["gemini"], authMethods: ["apiKey"] },
+    configFields: [
+      { key: "modelName", label: "Model Name", type: "text", placeholder: "gemini-1.5-pro", defaultValue: "gemini-1.5-pro", required: false },
+    ],
+  },
+  {
+    nodeRegistry: "model-deepseek",
+    category: "ai",
+    label: "DeepSeek",
+    description: "DeepSeek Chat and Coder models",
+    icon: "deepseek",
+    credentialRequirement: { providers: ["deepseek"], authMethods: ["apiKey"] },
+    configFields: [
+      { key: "modelName", label: "Model Name", type: "text", placeholder: "deepseek-chat", defaultValue: "deepseek-chat", required: false },
+    ],
+  },
+  {
+    nodeRegistry: "model-mistral",
+    category: "ai",
+    label: "Mistral",
+    description: "Mistral Large and Small models",
+    icon: "mistral",
+    credentialRequirement: { providers: ["mistral"], authMethods: ["apiKey"] },
+    configFields: [
+      { key: "modelName", label: "Model Name", type: "text", placeholder: "mistral-large", defaultValue: "mistral-large", required: false },
+    ],
+  },
+  {
+    nodeRegistry: "model-qwen",
+    category: "ai",
+    label: "Qwen",
+    description: "Qwen 2.5 series models",
+    icon: "qwen",
+    credentialRequirement: { providers: ["qwen"], authMethods: ["apiKey"] },
+    configFields: [
+      { key: "modelName", label: "Model Name", type: "text", placeholder: "qwen2.5-72b", defaultValue: "qwen2.5-72b", required: false },
+    ],
+  },
+  {
+    nodeRegistry: "model-kimi",
+    category: "ai",
+    label: "Kimi",
+    description: "Kimi chat and reasoning models",
+    icon: "kimi",
+    credentialRequirement: { providers: ["kimi"], authMethods: ["apiKey"] },
+    configFields: [
+      { key: "modelName", label: "Model Name", type: "text", placeholder: "kimi-latest", defaultValue: "kimi-latest", required: false },
+    ],
+  },
+  {
+    nodeRegistry: "model-meta",
+    category: "ai",
+    label: "Meta Llama",
+    description: "Llama 3.1 open-source models",
+    icon: "llama",
+    credentialRequirement: { providers: ["meta"], authMethods: ["apiKey"] },
+    configFields: [
+      { key: "modelName", label: "Model Name", type: "text", placeholder: "llama-3.1-70b", defaultValue: "llama-3.1-70b", required: false },
+    ],
+  },
+  {
+    nodeRegistry: "search",
+    category: "data",
+    label: "Search",
+    description: "Search the web using Tavily with configurable depth, answer mode, and domain filters",
+    icon: "search",
+    featured: true,
+    credentialRequirement: { providers: ["tavily"], authMethods: ["apiKey"] },
+    configFields: [],
+  },
+  {
+    nodeRegistry: "webscraper",
+    category: "data",
+    label: "Web Scraper",
+    description: "Scrape or crawl web pages with configurable page limit",
+    icon: "crawler",
+    credentialRequirement: { providers: ["firecrawl"], authMethods: ["apiKey"] },
+    configFields: [],
+  },
+  {
+    nodeRegistry: "memory",
+    category: "storage",
+    label: "Redis",
+    description: "Redis-backed persistent key-value store with TTL support",
+    icon: "redis",
+    featured: true,
+    credentialRequirement: { providers: ["redis"], authMethods: ["connectionString"] },
+    configFields: [],
+  },
+  {
+    nodeRegistry: "embedding",
+    category: "ai",
+    label: "Embedding",
+    description: "Convert text to vector embeddings",
+    icon: "vector",
+    credentialRequirement: { providers: ["openai"], authMethods: ["apiKey"] },
+    configFields: [
+      { key: "modelName", label: "Model", type: "text", placeholder: "text-embedding-3-small", required: false },
+    ],
+  },
+  {
+    nodeRegistry: "vectorDB",
+    category: "storage",
+    label: "Pinecone",
+    description: "Query, upsert, or delete vectors in a Pinecone index",
+    icon: "pinecone",
+    credentialRequirement: { providers: ["pinecone"], authMethods: ["apiKey"] },
+    configFields: [],
+  },
+  {
+    nodeRegistry: "imageGenerator",
+    category: "ai",
+    label: "Image Generator",
+    description: "Generate images with DALL-E 3",
+    icon: "image",
+    credentialRequirement: { providers: ["openai"], authMethods: ["apiKey"] },
+    configFields: [],
+  },
+  {
+    nodeRegistry: "imageReader",
+    category: "ai",
+    label: "Image Reader",
+    description: "Analyze images with GPT-4o vision",
+    icon: "eye",
+    credentialRequirement: { providers: ["bluesmind"], authMethods: ["apiKey"] },
+    configFields: [],
+  },
+  {
+    nodeRegistry: "imageEditor",
+    category: "ai",
+    label: "Image Editor",
+    description: "Edit images with DALL-E 2 inpainting",
+    icon: "edit",
+    credentialRequirement: { providers: ["openai"], authMethods: ["apiKey"] },
+    configFields: [],
+  },
+  {
+    nodeRegistry: "sheet",
+    category: "integration",
+    label: "Sheet",
+    description: "Read or write data to Google Sheets",
+    icon: "table",
+    credentialRequirement: { providers: ["google-sheets"], authMethods: ["apiKey", "serviceAccount"] },
+    configFields: [],
+  },
+  {
+    nodeRegistry: "calendarEvent",
+    category: "integration",
+    label: "Calendar",
+    description: "Create Google Calendar events with configurable defaults",
+    icon: "calendar",
+    credentialRequirement: { providers: ["google-calendar"], authMethods: ["serviceAccount"] },
+    configFields: [],
+  },
+  {
+    nodeRegistry: "sendMail",
+    category: "communication",
+    label: "Send Mail",
+    description: "Send emails via SMTP",
+    icon: "gmail",
+    featured: true,
+    credentialRequirement: { providers: ["smtp"], authMethods: ["smtp"] },
+    configFields: [
+      { key: "to", label: "Default Recipient", type: "text", placeholder: "user@example.com", required: false },
+    ],
+  },
+  {
+    nodeRegistry: "chart",
+    category: "utility",
+    label: "Chart",
+    description: "Generate pie/line charts via QuickChart",
+    icon: "bar-chart",
+    configFields: [],
+  },
+  {
+    nodeRegistry: "readFile",
+    category: "utility",
+    label: "Read File",
+    description: "Read files from project workspace",
+    icon: "file",
+    configFields: [],
+  },
+  {
+    nodeRegistry: "writeFile",
+    category: "utility",
+    label: "Write File",
+    description: "Write files to project workspace",
+    icon: "file-plus",
+    configFields: [],
+  },
+  {
+    nodeRegistry: "readAndUpdateFile",
+    category: "utility",
+    label: "Edit File",
+    description: "Find-replace content in a file",
+    icon: "file-edit",
+    configFields: [],
+  },
+  {
+    nodeRegistry: "postgresDB",
+    category: "storage",
+    label: "PostgreSQL",
+    description: "Query a PostgreSQL database with your credentials",
+    icon: "postgres",
+    featured: true,
+    credentialRequirement: { providers: ["postgres"], authMethods: ["userPassword"] },
+    configFields: [],
+  },
+  {
+    nodeRegistry: "mysqlDB",
+    category: "storage",
+    label: "MySQL",
+    description: "Query a MySQL database with your credentials",
+    icon: "mysql",
+    credentialRequirement: { providers: ["mysql"], authMethods: ["userPassword"] },
+    configFields: [],
+  },
+  {
+    nodeRegistry: "mongoDB",
+    category: "storage",
+    label: "MongoDB",
+    description: "Query a MongoDB database with your connection URI",
+    icon: "mongo",
+    credentialRequirement: { providers: ["mongodb"], authMethods: ["connectionString"] },
+    configFields: [],
+  },
+  {
+    nodeRegistry: "slack",
+    category: "communication",
+    label: "Slack",
+    description: "Send and read Slack messages",
+    icon: "slack",
+  },
+  {
+    nodeRegistry: "discord",
+    category: "communication",
+    label: "Discord",
+    description: "Send and read Discord messages",
+    icon: "discord",
+  },
+  {
+    nodeRegistry: "notion",
+    category: "integration",
+    label: "Notion",
+    description: "Query, create, update, and retrieve Notion pages and databases",
+    icon: "notion",
+    credentialRequirement: { providers: ["notion"], authMethods: ["apiKey"] },
+    configFields: [],
+  },
+];
+
+export function findMetadata(nodeRegistry: string): ToolMetadata | undefined {
+  return toolMetadatas.find((t) => t.nodeRegistry === nodeRegistry);
+}

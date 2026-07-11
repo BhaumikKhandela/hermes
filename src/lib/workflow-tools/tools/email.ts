@@ -26,22 +26,30 @@ function createTransporter(config?: Record<string, any>) {
 export const createEmailTool: ToolFactory = (config) => {
   return tool(
     async ({ to, subject, body }) => {
+      const resolvedTo = to || config?.to;
+      const resolvedSubject = subject || config?.subject;
+      const resolvedBody = body || config?.body;
+
+      if (!resolvedTo || !resolvedSubject || !resolvedBody) {
+        return "SendMail is missing required fields (to, subject, or body). Configure them in the node settings or pass them as tool arguments.";
+      }
+
       const t = createTransporter(config);
       const info = await t.sendMail({
-        to,
-        subject,
-        text: body,
+        to: resolvedTo,
+        subject: resolvedSubject,
+        text: resolvedBody,
       });
-      return `Email sent to ${to}: ${info.messageId}`;
+      return `Email sent to ${resolvedTo}: ${info.messageId}`;
     },
     {
       name: "sendMail",
       description:
-        "Send an email via SMTP. Provide recipient, subject, and body.",
+        "Send an email via SMTP. Provide recipient, subject, and body. Falls back to configured defaults if omitted.",
       schema: z.object({
-        to: z.string().email().describe("Recipient email address"),
-        subject: z.string().describe("Email subject line"),
-        body: z.string().describe("Email body text"),
+        to: z.string().email().optional().describe("Recipient email address. Falls back to configured value if omitted."),
+        subject: z.string().optional().describe("Email subject line. Falls back to configured value if omitted."),
+        body: z.string().optional().describe("Email body text. Falls back to configured value if omitted."),
       }),
     },
   );

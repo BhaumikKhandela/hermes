@@ -3,19 +3,47 @@ import { z } from "zod";
 import Firecrawl from "@mendable/firecrawl";
 import { ToolFactory } from "../types";
 
+const webscraperSchema = z.object({
+  url: z.string().describe("The URL to scrape"),
+  crawl: z
+    .boolean()
+    .optional()
+    .describe("If true, crawl linked pages (default: false)"),
+  maxPages: z
+    .number()
+    .min(1)
+    .max(50)
+    .optional()
+    .describe("Max pages to crawl (1-50, default: 10)"),
+});
+
+const partialWebscraperSchema = webscraperSchema.partial();
+
+type ScraperInput = z.input<typeof partialWebscraperSchema>;
+
 export const createWebscraperTool: ToolFactory = (config) => {
   const apiKey = config?.apiKey || "";
 
   return tool(
-    async ({ url, crawl }) => {
+    async (input: ScraperInput) => {
       if (!apiKey) {
-        return "Webscraper tool is not configured. Double-click the node and provide a Firecrawl API Key.";
+        return "Webscraper tool is not configured. Provide a Firecrawl API Key via the credential settings.";
+      }
+
+      const parsed = partialWebscraperSchema.parse(input);
+      const url = parsed.url || config?.url;
+      const crawl = parsed.crawl ?? config?.crawl ?? false;
+      const maxPages = parsed.maxPages || config?.maxPages || 10;
+
+      if (!url) {
+        return "No URL provided. Pass `url` as a tool argument or configure it in the node settings.";
       }
 
       const app = new Firecrawl({ apiKey });
+
       if (crawl) {
         const result = await app.crawl(url, {
-          limit: 10,
+          limit: maxPages,
           scrapeOptions: { formats: ["markdown"] },
         });
         return result.data
@@ -34,14 +62,8 @@ export const createWebscraperTool: ToolFactory = (config) => {
     {
       name: "webscraper",
       description:
-        "Scrape or crawl a web page and extract its content as clean markdown. Handles JavaScript-rendered pages.",
-      schema: z.object({
-        url: z.string().url().describe("The URL to scrape"),
-        crawl: z
-          .boolean()
-          .optional()
-          .describe("If true, crawl linked pages up to 10 (default: false)"),
-      }),
+        "Scrape or crawl a web page and extract its content as clean markdown. Handles JavaScript-rendered pages. Supports crawling linked pages up to a configurable limit. Falls back to configured values when arguments are omitted.",
+      schema: partialWebscraperSchema,
     },
   );
 };

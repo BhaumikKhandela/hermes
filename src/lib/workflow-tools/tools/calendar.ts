@@ -21,22 +21,39 @@ function createCalendarClient(config?: Record<string, any>) {
   return google.calendar({ version: "v3", auth });
 }
 
+export const partialCalendarSchema = z.object({
+  summary: z.string().optional(),
+  description: z.string().optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  timeZone: z.string().optional(),
+  calendarId: z.string().optional(),
+});
+
 export const createCalendarTool: ToolFactory = (config) => {
   return tool(
-    async ({ summary, description, startTime, endTime, timeZone }) => {
+    async (input) => {
+      const parsed = partialCalendarSchema.parse(input);
+      const summary = parsed.summary || config?.summary || "New Event";
+      const description = parsed.description || config?.description;
+      const startTime = parsed.startTime || config?.startTime;
+      const endTime = parsed.endTime || config?.endTime;
+      const timeZone = parsed.timeZone || config?.timeZone || "UTC";
+      const calendarId = parsed.calendarId || config?.calendarId || "primary";
+
       const client = createCalendarClient(config);
       const res = await client.events.insert({
-        calendarId: "primary",
+        calendarId,
         requestBody: {
           summary,
           description,
           start: {
             dateTime: startTime,
-            timeZone: timeZone || "UTC",
+            timeZone,
           },
           end: {
             dateTime: endTime,
-            timeZone: timeZone || "UTC",
+            timeZone,
           },
         },
       });
@@ -45,17 +62,19 @@ export const createCalendarTool: ToolFactory = (config) => {
     {
       name: "calendarEvent",
       description:
-        "Create a Google Calendar event with title, time, and optional description.",
+        "Create a Google Calendar event with configurable defaults. Falls back to configured values when arguments are omitted.",
       schema: z.object({
-        summary: z.string().describe("Event title"),
+        summary: z.string().optional().describe("Event title"),
         description: z.string().optional().describe("Event description"),
         startTime: z
           .string()
+          .optional()
           .describe(
             "Start time in ISO 8601 format (e.g. 2025-01-01T10:00:00Z)",
           ),
         endTime: z
           .string()
+          .optional()
           .describe(
             "End time in ISO 8601 format (e.g. 2025-01-01T11:00:00Z)",
           ),
@@ -63,6 +82,10 @@ export const createCalendarTool: ToolFactory = (config) => {
           .string()
           .optional()
           .describe("IANA timezone (default: UTC)"),
+        calendarId: z
+          .string()
+          .optional()
+          .describe("Calendar ID (default: primary)"),
       }),
     },
   );
