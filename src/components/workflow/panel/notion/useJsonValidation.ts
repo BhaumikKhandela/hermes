@@ -6,7 +6,7 @@ export type JsonValidationResult = {
   isExpression: boolean;
 };
 
-function substituteExpressionsFromJson(input: string): {
+export function substituteExpressionsFromJson(input: string): {
   result: string;
   hasExpression: boolean;
   unclosedExpression: boolean;
@@ -69,47 +69,49 @@ function substituteExpressionsFromJson(input: string): {
   };
 }
 
-export function useJsonValidation(value: string): JsonValidationResult {
-  return useMemo(() => {
-    const trimmed = value.trim();
+export function validateJsonWithExpressions(value: string): JsonValidationResult {
+  const trimmed = value.trim();
 
-    if (!trimmed) {
-      return { isValid: true, error: null, isExpression: false };
-    }
+  if (!trimmed) {
+    return { isValid: true, error: null, isExpression: false };
+  }
 
-    const { result, hasExpression, unclosedExpression } =
-      substituteExpressionsFromJson(trimmed);
+  const { result, hasExpression, unclosedExpression } =
+    substituteExpressionsFromJson(trimmed);
 
-    if (unclosedExpression) {
+  if (unclosedExpression) {
+    return {
+      isValid: false,
+      error: "Unclosed expression {{ ...",
+      isExpression: true,
+    };
+  }
+
+  try {
+    JSON.parse(result);
+    return { isValid: true, error: null, isExpression: hasExpression };
+  } catch (e) {
+    const err = e as SyntaxError;
+    const match = err.message.match(/position\s+(\d+)/);
+    if (match) {
+      const pos = parseInt(match[1], 10);
+      const lines = trimmed.slice(0, pos).split("\n");
+      const lineNum = lines.length;
+      const colNum = pos - trimmed.lastIndexOf("\n", pos - 1);
       return {
         isValid: false,
-        error: "Unclosed expression {{ ...",
-        isExpression: true,
-      };
-    }
-
-    try {
-      JSON.parse(result);
-      return { isValid: true, error: null, isExpression: hasExpression };
-    } catch (e) {
-      const err = e as SyntaxError;
-      const match = err.message.match(/position\s+(\d+)/);
-      if (match) {
-        const pos = parseInt(match[1], 10);
-        const lines = trimmed.slice(0, pos).split("\n");
-        const lineNum = lines.length;
-        const colNum = pos - trimmed.lastIndexOf("\n", pos - 1);
-        return {
-          isValid: false,
-          error: `Invalid JSON at line ${lineNum}, column ${colNum}`,
-          isExpression: hasExpression,
-        };
-      }
-      return {
-        isValid: false,
-        error: "Invalid JSON",
+        error: `Invalid JSON at line ${lineNum}, column ${colNum}`,
         isExpression: hasExpression,
       };
     }
-  }, [value]);
+    return {
+      isValid: false,
+      error: "Invalid JSON",
+      isExpression: hasExpression,
+    };
+  }
+}
+
+export function useJsonValidation(value: string): JsonValidationResult {
+  return useMemo(() => validateJsonWithExpressions(value), [value]);
 }

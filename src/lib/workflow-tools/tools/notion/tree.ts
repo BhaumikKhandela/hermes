@@ -1,4 +1,6 @@
 import type { VisualBlock } from "./types";
+import { blockRegistry } from "./registry";
+import { cloneVisualBlockWithFreshIds } from "./cloneBlock";
 
 export function findBlockById(
   blocks: VisualBlock[],
@@ -46,8 +48,7 @@ export function duplicateBlock(blocks: VisualBlock[], blockId: string): VisualBl
   const source = findBlockById(blocks, blockId);
   if (!source) return blocks;
 
-  const clone: VisualBlock = JSON.parse(JSON.stringify(source.block));
-  clone.id = crypto.randomUUID();
+  const clone = cloneVisualBlockWithFreshIds(source.block);
 
   source.parent.splice(source.index + 1, 0, clone);
   return [...blocks];
@@ -67,6 +68,9 @@ export function indentBlock(blocks: VisualBlock[], blockId: string): VisualBlock
 
   const prevBlock = source.parent[source.index - 1];
   if (!prevBlock) return blocks;
+
+  const prevDef = blockRegistry[prevBlock.type];
+  if (!prevDef || prevDef.canHaveChildren !== true) return blocks;
 
   const [removed] = source.parent.splice(source.index, 1);
 

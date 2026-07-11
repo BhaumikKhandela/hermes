@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { VisualBlock, NotionContent, EditorMode, VisualDraftState, MarkdownDraftState, JsonDraftState } from "@/lib/workflow-tools/tools/notion/types";
-import { visualBlocksToNotionJson, tryConvertNotionJsonToVisual, visualBlocksToMarkdown } from "@/lib/workflow-tools/tools/notion/convert";
+import type { WarningState } from "@/lib/workflow-tools/tools/notion/editorState";
+import { attemptModeSwitch as computeTransition, applyLossyConversion, applySwitchAnyway, applyEditorChange, makeInitialVisualState, makeInitialMarkdownState, makeInitialJsonState } from "@/lib/workflow-tools/tools/notion/editorState";
 import { VisualBlockEditor } from "./VisualBlockEditor";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { JsonEditor } from "./JsonEditor";
@@ -16,67 +17,6 @@ type Props = {
   onChange: (content: NotionContent | undefined) => void;
   layout?: "compact" | "expanded";
 };
-
-type WarningState =
-  | { type: "unsupported"; unsupportedFeatures: string[]; targetMode: EditorMode }
-  | { type: "lossy"; unsupportedFeatures: string[]; targetMode: EditorMode; convertedBlocks: VisualBlock[] }
-  | null;
-
-function makeInitialVisualState(value: NotionContent | undefined): VisualDraftState {
-  if (value?.mode === "visual") {
-    return { status: "user-edited", value: value.blocks };
-  }
-  return { status: "uninitialized", value: [] };
-}
-
-function makeInitialMarkdownState(value: NotionContent | undefined): MarkdownDraftState {
-  if (value?.mode === "markdown") {
-    return { status: "user-edited", value: value.markdown };
-  }
-  return { status: "uninitialized", value: "" };
-}
-
-function makeInitialJsonState(value: NotionContent | undefined): JsonDraftState {
-  if (value?.mode === "json") {
-    return { status: "user-edited", value: value.json };
-  }
-  return { status: "uninitialized", value: "" };
-}
-
-function getConversionSupport(
-  source: EditorMode,
-  target: EditorMode,
-  sourceValue: string | VisualBlock[],
-):
-  | { supported: false; unsupportedFeatures: string[] }
-  | { supported: true; lossless: false; unsupportedFeatures: string[]; convertedValue: VisualBlock[] }
-  | { supported: true; lossless: true; convertedValue: string | VisualBlock[] }
-{
-  if (source === "visual" && target === "markdown") {
-    const md = visualBlocksToMarkdown(sourceValue as VisualBlock[]);
-    return { supported: true, lossless: true, convertedValue: md };
-  }
-  if (source === "visual" && target === "json") {
-    const jsonStr = JSON.stringify(visualBlocksToNotionJson(sourceValue as VisualBlock[]), null, 2);
-    return { supported: true, lossless: true, convertedValue: jsonStr };
-  }
-  if (source === "json" && target === "visual") {
-    const result = tryConvertNotionJsonToVisual(sourceValue as string);
-    if (!result.success) {
-      return { supported: true, lossless: false, unsupportedFeatures: result.unsupportedFeatures, convertedValue: result.partialBlocks };
-    }
-    return { supported: true, lossless: true, convertedValue: result.blocks };
-  }
-  return { supported: false, unsupportedFeatures: [`${source} to ${target} conversion is not supported`] };
-}
-
-function getCurrentValue(mode: EditorMode, visual: VisualBlock[], md: string, js: string): string | VisualBlock[] {
-  switch (mode) {
-    case "visual": return visual;
-    case "markdown": return md;
-    case "json": return js;
-  }
-}
 
 export function NotionContentEditor({ value, onChange, layout = "compact" }: Props) {
   const [mode, setMode] = useState<EditorMode>(value?.mode || "visual");
@@ -134,82 +74,35 @@ export function NotionContentEditor({ value, onChange, layout = "compact" }: Pro
     }
   }, []);
 
-  const getTargetState = useCallback((target: EditorMode): VisualDraftState | MarkdownDraftState | JsonDraftState => {
-    switch (target) {
-      case "visual": return visualState;
-      case "markdown": return markdownState;
-      case "json": return jsonState;
-    }
-  }, [visualState, markdownState, jsonState]);
-
-  const attemptModeSwitch = useCallback((target: EditorMode) => {
+  const handleAttemptModeSwitch = useCallback((target: EditorMode) => {
     if (target === mode) return;
-    const source = mode;
-
-    const targetProv = getTargetState(target);
-
-    if (targetProv.status === "user-edited") {
-      setMode(target);
-      return;
-    }
-
-    if (targetProv.status === "generated") {
-      const conv = getConversionSupport(
-        source,
-        target,
-        getCurrentValue(source, latestVisualRef.current, latestMarkdownRef.current, latestJsonRef.current),
-      );
-      if (conv.supported) {
-        setTarget(target, {
-          status: "generated",
-          value: conv.convertedValue as any,
-          generatedFrom: source,
-          conversion: conv.lossless ? "lossless" : "lossy",
-        });
-        setMode(target);
-      } else {
-        setMode(target);
-      }
-      return;
-    }
-
-    // targetProv.status === "uninitialized"
-    const conv = getConversionSupport(
-      source,
-      target,
-      getCurrentValue(source, latestVisualRef.current, latestMarkdownRef.current, latestJsonRef.current),
+    const result = computeTransition(
+      mode, target,
+      latestVisualRef.current, latestMarkdownRef.current, latestJsonRef.current,
+      visualState, markdownState, jsonState,
     );
-
-    if (conv.supported && conv.lossless) {
-      setTarget(target, {
-        status: "generated",
-        value: conv.convertedValue as any,
-        generatedFrom: source,
-        conversion: "lossless",
-      });
-      setMode(target);
-      return;
+    switch (result.kind) {
+      case "switch":
+        setTarget(target, result.newState);
+        setMode(target);
+        break;
+      case "show-lossy-confirmation":
+        setWarning({
+          type: "lossy",
+          unsupportedFeatures: result.unsupportedFeatures,
+          targetMode: result.targetMode,
+          convertedBlocks: result.convertedBlocks,
+        });
+        break;
+      case "show-unsupported-confirmation":
+        setWarning({
+          type: "unsupported",
+          unsupportedFeatures: result.unsupportedFeatures,
+          targetMode: result.targetMode,
+        });
+        break;
     }
-
-    if (conv.supported && !conv.lossless) {
-      setWarning({
-        type: "lossy",
-        unsupportedFeatures: conv.unsupportedFeatures,
-        targetMode: target,
-        convertedBlocks: conv.convertedValue,
-      });
-      return;
-    }
-
-    if (!conv.supported) {
-      setWarning({
-        type: "unsupported",
-        unsupportedFeatures: conv.unsupportedFeatures,
-        targetMode: target,
-      });
-      return;
-    }
-  }, [mode, getTargetState, setTarget]);
+  }, [mode, visualState, markdownState, jsonState, setTarget]);
 
   const handleStayInMode = useCallback(() => {
     setWarning(null);
@@ -217,65 +110,29 @@ export function NotionContentEditor({ value, onChange, layout = "compact" }: Pro
 
   const handleConvertAnyway = useCallback(() => {
     if (!warning || warning.type !== "lossy") return;
-
-    const target = warning.targetMode;
-    setTarget(target, {
-      status: "generated",
-      value: warning.convertedBlocks as any,
-      generatedFrom: mode,
-      conversion: "lossy",
-    });
-    setMode(target);
+    const result = applyLossyConversion(warning.targetMode, mode, warning.convertedBlocks);
+    setTarget(result.targetMode, result.newState);
+    setMode(result.targetMode);
     setWarning(null);
   }, [warning, mode, setTarget]);
 
   const handleSwitchAnyway = useCallback(() => {
     if (!warning || warning.type !== "unsupported") return;
-
-    const target = warning.targetMode;
-    switch (target) {
-      case "visual":
-        setTarget(target, { status: "user-edited", value: [] });
-        break;
-      case "markdown":
-        setTarget(target, { status: "user-edited", value: "" });
-        break;
-      case "json":
-        setTarget(target, { status: "user-edited", value: "" });
-        break;
-    }
-    setMode(target);
+    const result = applySwitchAnyway(warning.targetMode);
+    setTarget(result.targetMode, result.newState);
+    setMode(result.targetMode);
     setWarning(null);
-  }, [warning, mode, setTarget]);
+  }, [warning, setTarget]);
 
   const handleEditorChange = useCallback((newValue: string | VisualBlock[]) => {
+    const prev = mode === "visual" ? visualState : mode === "markdown" ? markdownState : jsonState;
+    const updated = applyEditorChange(mode, newValue, prev);
     switch (mode) {
-      case "visual":
-        setVisualState((prev) => ({
-          status: "user-edited",
-          value: newValue as VisualBlock[],
-          generatedFrom: prev.generatedFrom,
-          conversion: prev.conversion,
-        }));
-        break;
-      case "markdown":
-        setMarkdownState((prev) => ({
-          status: "user-edited",
-          value: newValue as string,
-          generatedFrom: prev.generatedFrom,
-          conversion: prev.conversion,
-        }));
-        break;
-      case "json":
-        setJsonState((prev) => ({
-          status: "user-edited",
-          value: newValue as string,
-          generatedFrom: prev.generatedFrom,
-          conversion: prev.conversion,
-        }));
-        break;
+      case "visual": setVisualState(updated as VisualDraftState); break;
+      case "markdown": setMarkdownState(updated as MarkdownDraftState); break;
+      case "json": setJsonState(updated as JsonDraftState); break;
     }
-  }, [mode]);
+  }, [mode, visualState, markdownState, jsonState]);
 
   const modes: { key: EditorMode; label: string }[] = [
     { key: "visual", label: "Visual Blocks" },
@@ -288,7 +145,7 @@ export function NotionContentEditor({ value, onChange, layout = "compact" }: Pro
       {modes.map((m) => (
         <button
           key={m.key}
-          onClick={() => attemptModeSwitch(m.key)}
+          onClick={() => handleAttemptModeSwitch(m.key)}
           className={`flex-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
             mode === m.key
               ? "bg-white text-[#111827] shadow-sm"

@@ -17,6 +17,7 @@ type Props = {
   onDragStart: (e: React.DragEvent) => void;
   isFirst: boolean;
   isLast: boolean;
+  canIndent?: boolean;
 };
 
 const CODE_LANGUAGES = [
@@ -27,7 +28,7 @@ const CODE_LANGUAGES = [
 
 export function BlockCard({
   block, onUpdate, onDelete, onMoveUp, onMoveDown, onDuplicate,
-  onIndent, onOutdent, onDragStart, isFirst, isLast,
+  onIndent, onOutdent, onDragStart, isFirst, isLast, canIndent = false,
 }: Props) {
   const def = blockRegistry[block.type];
   const [showMenu, setShowMenu] = useState(false);
@@ -120,8 +121,9 @@ export function BlockCard({
             )}
             {onIndent && (
               <button
-                onClick={() => { onIndent(); setShowMenu(false); }}
-                className="flex items-center gap-2 w-full px-2 py-1.5 text-xs text-[#111827] hover:bg-[#F5F5FF] rounded"
+                disabled={!canIndent}
+                onClick={() => { if (canIndent) { onIndent(); setShowMenu(false); } }}
+                className="flex items-center gap-2 w-full px-2 py-1.5 text-xs text-[#111827] hover:bg-[#F5F5FF] rounded disabled:opacity-30"
               >
                 <ChevronRight size={12} /> Indent
               </button>

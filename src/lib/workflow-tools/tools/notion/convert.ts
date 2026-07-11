@@ -169,10 +169,16 @@ function richTextToNotion(rt: VisualRichText): Record<string, any> {
 }
 
 export function visualBlocksToMarkdown(blocks: VisualBlock[]): string {
-  return blocks.map(blockToMarkdown).join("\n\n");
+  return blocks.map((b) => blockToMarkdown(b, 0)).join("\n\n");
 }
 
-function blockToMarkdown(block: VisualBlock): string {
+function childrenToMarkdown(children: VisualBlock[], depth: number, prefix: string): string {
+  return children
+    .map((c) => `${prefix}${blockToMarkdown(c, depth + 1)}`)
+    .join("\n");
+}
+
+function blockToMarkdown(block: VisualBlock, depth: number = 0): string {
   const text = block.richText.map((rt) => {
     let t = rt.text;
     if (rt.annotations?.bold) t = `**${t}**`;
@@ -182,19 +188,41 @@ function blockToMarkdown(block: VisualBlock): string {
     if (rt.link) t = `[${t}](${rt.link})`;
     return t;
   }).join("");
+  const indent = "  ".repeat(depth);
+  const childIndent = "  ".repeat(depth + 1);
+  const children = block.children || [];
 
   switch (block.type) {
     case "heading_1": return `# ${text}`;
     case "heading_2": return `## ${text}`;
     case "heading_3": return `### ${text}`;
-    case "bulleted_list_item": return `- ${text}`;
-    case "numbered_list_item": return `1. ${text}`;
-    case "to_do": return `- [${block.checked ? "x" : " "}] ${text}`;
-    case "quote": return `> ${text}`;
+    case "bulleted_list_item":
+      return children.length > 0
+        ? `- ${text}\n${childrenToMarkdown(children, depth, `${childIndent}- `)}`
+        : `- ${text}`;
+    case "numbered_list_item":
+      return children.length > 0
+        ? `1. ${text}\n${childrenToMarkdown(children, depth, `${childIndent}1. `)}`
+        : `1. ${text}`;
+    case "to_do":
+      return children.length > 0
+        ? `- [${block.checked ? "x" : " "}] ${text}\n${children.map((c) => `${childIndent}${blockToMarkdown(c, depth + 1)}`).join("\n")}`
+        : `- [${block.checked ? "x" : " "}] ${text}`;
+    case "quote":
+      return children.length > 0
+        ? `> ${text}\n${children.map((c) => `> ${blockToMarkdown(c, depth + 1)}`).join("\n")}`
+        : `> ${text}`;
     case "code": return `\`\`\`${block.language || ""}\n${block.richText.map(r => r.text).join("")}\n\`\`\``;
     case "divider": return "---";
-    case "toggle": return `<details><summary>${text}</summary>\n\n${(block.children || []).map(blockToMarkdown).join("\n\n")}\n</details>`;
-    case "callout": return `${block.icon || "💡"} ${text}`;
+    case "toggle": return `<details><summary>${text}</summary>\n\n${(block.children || []).map((c) => blockToMarkdown(c, depth + 1)).join("\n\n")}\n</details>`;
+    case "callout":
+      return children.length > 0
+        ? `${block.icon || "💡"} ${text}\n${children.map((c) => `${childIndent}${blockToMarkdown(c, depth + 1)}`).join("\n")}`
+        : `${block.icon || "💡"} ${text}`;
+    case "paragraph":
+      return children.length > 0
+        ? `${text}\n${children.map((c) => `${childIndent}${blockToMarkdown(c, depth + 1)}`).join("\n")}`
+        : text;
     default: return text;
   }
 }

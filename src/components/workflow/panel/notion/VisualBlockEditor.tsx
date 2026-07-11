@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, createContext, useContext } from "react"
 import type { VisualBlock, VisualBlockType, BlockDragPayload } from "@/lib/workflow-tools/tools/notion/types";
 import { blockRegistry } from "@/lib/workflow-tools/tools/notion/registry";
 import { indentBlock, outdentBlock } from "@/lib/workflow-tools/tools/notion/tree";
+import { cloneVisualBlockWithFreshIds } from "@/lib/workflow-tools/tools/notion/cloneBlock";
 import { BlockCard } from "./BlockCard";
 import { ChevronDown, Plus } from "lucide-react";
 
@@ -62,8 +63,7 @@ export function VisualBlockEditor({ blocks, onChange, parentId = null }: Props) 
   }, [blocks, onChange]);
 
   const doDuplicateBlock = useCallback((index: number) => {
-    const clone: VisualBlock = JSON.parse(JSON.stringify(blocks[index]));
-    clone.id = crypto.randomUUID();
+    const clone = cloneVisualBlockWithFreshIds(blocks[index]);
     const next = [...blocks];
     next.splice(index + 1, 0, clone);
     onChange(next);
@@ -179,7 +179,11 @@ export function VisualBlockEditor({ blocks, onChange, parentId = null }: Props) 
           />
         )}
 
-        {blocks.map((block, i) => (
+        {blocks.map((block, i) => {
+          const prevDef = i > 0 ? blockRegistry[blocks[i - 1].type] : null;
+          const canIndent = prevDef ? prevDef.canHaveChildren === true : false;
+
+          return (
           <div key={block.id}>
             <div
               onDragOver={handleDragOver}
@@ -197,6 +201,7 @@ export function VisualBlockEditor({ blocks, onChange, parentId = null }: Props) 
                 onDragStart={(e) => handleDragStart(e, block.id)}
                 isFirst={i === 0}
                 isLast={i === blocks.length - 1}
+                canIndent={canIndent}
               />
             </div>
 
@@ -215,7 +220,8 @@ export function VisualBlockEditor({ blocks, onChange, parentId = null }: Props) 
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
 
         {/* End-of-list drop zone */}
         {blocks.length > 0 && (
