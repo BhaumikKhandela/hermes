@@ -259,10 +259,10 @@ const ChatPanel = ({
       style={{ width: `${chatWidth}px ` }}
       className="flex flex-col h-full shrink-0"
     >
-      <div className="h-14 border-b border-slate-200 flex items-center px-4 shrink-0">
-        <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-          <span>Hermes</span>
-          <span>AI</span>
+      <div className="h-14 border-b border-[#E7E7E7] flex items-center px-4 shrink-0 bg-white">
+        <div className="flex items-center gap-1.5">
+          <span className="text-lg font-bold text-[#111827]">Hermes</span>
+          <span className="text-lg font-bold text-[#5B5CEB]">AI</span>
         </div>
       </div>
 

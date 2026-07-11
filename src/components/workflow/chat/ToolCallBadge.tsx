@@ -22,7 +22,7 @@ export default function ToolCallBadge({ toolCalls }: ToolCallBadgeProps) {
   const isRunning = !!running;
 
   return (
-    <div className="py-2">
+    <div className="py-2 rounded-xl px-3">
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-2 text-xs text-slate-600 hover:text-slate-800 w-full text-left"

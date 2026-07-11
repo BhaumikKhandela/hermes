@@ -25,8 +25,8 @@ export const ChatMessages = memo(function MessageBubble({
     >
       <div
         className={cn(
-          "max-w-[75%] rounded-xl px-4 py-3 text-sm shadow-sm",
-          isUser ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-900",
+          "max-w-[75%] rounded-2xl px-4 py-3 text-sm",
+          isUser ? "bg-[#5B5CEB] text-white" : "bg-[#F5F5F5] text-[#111827]",
         )}
       >
         {/* Thinking section (AI only) */}
