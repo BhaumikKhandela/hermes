@@ -44,3 +44,5 @@ next-env.d.ts
 /public/memory
 /public/agent-builder/*.todos.json
 /public/agent-builder/working-agent-folder/
+# Working agent folder
+working-agent-folder/
