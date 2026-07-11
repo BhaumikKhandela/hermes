@@ -774,3 +774,146 @@ describe("attemptModeSwitch (production state machine)", () => {
     expect(features).toEqual(["underline annotations"]);
   });
 });
+
+// ══════════════════════════════════════════════════════════
+// 7. GENERATED-TARGET LOSSY CONFIRMATION (provenance bug fix)
+// ══════════════════════════════════════════════════════════
+
+describe("generated-target lossy confirmation invariant", () => {
+  // Scenario A: Generated Markdown target + newly underlined Visual source
+  it("A: generated markdown target with newly underlined visual shows lossy confirmation", () => {
+    const vs = makeInitialVisualState(undefined);
+    const ms = makeInitialMarkdownState(undefined);
+    const js = makeInitialJsonState(undefined);
+
+    const plain: VisualBlock[] = [{ id: "p", type: "paragraph", richText: [{ id: "rt1", text: "Hello" }] }];
+
+    // Visual -> Markdown (lossless, generates markdown draft)
+    const r1 = attemptModeSwitch("visual", "markdown", plain, "", "", vs, ms, js);
+    expect(r1.kind).toBe("switch");
+    const msGenerated = r1.newState as MarkdownDraftState;
+    expect(msGenerated.status).toBe("generated");
+
+    // Edit visual to add underline
+    const underlined: VisualBlock[] = [{
+      id: "p", type: "paragraph",
+      richText: [{ id: "rt1", text: "Hello", annotations: { underline: true } }],
+    }];
+
+    // Visual -> Markdown again: target is generated, conversion is lossy
+    const r2 = attemptModeSwitch("visual", "markdown", underlined, "", "", vs, msGenerated, js);
+    expect(r2.kind).toBe("show-lossy-confirmation");
+    expect(r2.unsupportedFeatures).toContain("underline annotations");
+    expect(typeof r2.convertedValue).toBe("string");
+    expect(r2.convertedValue).toContain("Hello");
+  });
+
+  // Scenario B: Generated Markdown target + changed but still lossless Visual source
+  it("B: generated markdown target with changed lossless visual regenerates", () => {
+    const vs = makeInitialVisualState(undefined);
+    const ms = makeInitialMarkdownState(undefined);
+    const js = makeInitialJsonState(undefined);
+
+    const v1: VisualBlock[] = [{ id: "p", type: "paragraph", richText: [{ id: "rt1", text: "first" }] }];
+
+    // Visual -> Markdown (generated, lossless)
+    const r1 = attemptModeSwitch("visual", "markdown", v1, "", "", vs, ms, js);
+    expect(r1.kind).toBe("switch");
+    const msGenerated = r1.newState as MarkdownDraftState;
+
+    // Edit visual to different text, still lossless
+    const v2: VisualBlock[] = [{ id: "p", type: "paragraph", richText: [{ id: "rt1", text: "second" }] }];
+    const vsEdited = applyEditorChange("visual", v2, vs);
+
+    // Visual -> Markdown again: target is generated, conversion is lossless -> regenerate
+    const r2 = attemptModeSwitch("visual", "markdown", v2, "", "", vsEdited, msGenerated, js);
+    expect(r2.kind).toBe("switch");
+    const mdState = r2.newState as MarkdownDraftState;
+    expect(mdState.status).toBe("generated");
+    expect(mdState.value).toContain("second");
+    expect(mdState.value).not.toContain("first");
+    expect(mdState.generatedFrom).toBe("visual");
+    expect(mdState.conversion).toBe("lossless");
+  });
+
+  // Scenario C: Confirming lossy visual->markdown via applyLossyConversion
+  it("C: confirming lossy visual->markdown creates correct lossy draft", () => {
+    const vs = makeInitialVisualState(undefined);
+    const ms = makeInitialMarkdownState(undefined);
+    const js = makeInitialJsonState(undefined);
+
+    const underlined: VisualBlock[] = [{
+      id: "p", type: "paragraph",
+      richText: [{ id: "rt1", text: "data", annotations: { underline: true } }],
+    }];
+
+    // Visual -> Markdown (uninitialized target)
+    const r1 = attemptModeSwitch("visual", "markdown", underlined, "", "", vs, ms, js);
+    expect(r1.kind).toBe("show-lossy-confirmation");
+
+    // Confirm lossy
+    const confirmed = applyLossyConversion("markdown", "visual", r1.convertedValue);
+    expect(confirmed.targetMode).toBe("markdown");
+    const draft = confirmed.newState as MarkdownDraftState;
+    expect(draft.status).toBe("generated");
+    expect(draft.generatedFrom).toBe("visual");
+    expect(draft.conversion).toBe("lossy");
+    expect(draft.value).toBe(r1.convertedValue);
+  });
+
+  // Scenario D: User-edited target restoration unchanged
+  it("D: user-edited markdown target is restored without overwrite", () => {
+    const vs = makeInitialVisualState(undefined);
+    const ms = makeInitialMarkdownState(undefined);
+    const js = makeInitialJsonState(undefined);
+
+    const v1: VisualBlock[] = [{ id: "p", type: "paragraph", richText: [{ id: "rt1", text: "from visual" }] }];
+
+    // Visual -> Markdown (generated)
+    const r1 = attemptModeSwitch("visual", "markdown", v1, "", "", vs, ms, js);
+    expect(r1.kind).toBe("switch");
+    const msGenerated = r1.newState as MarkdownDraftState;
+
+    // User edits markdown to custom content
+    const customMd = "user typed this";
+    const msEdited = applyEditorChange("markdown", customMd, msGenerated);
+    expect(msEdited.status).toBe("user-edited");
+
+    // Markdown -> Visual
+    const vsEdited = makeInitialVisualState({ mode: "visual", blocks: v1 });
+    const r2 = attemptModeSwitch("markdown", "visual", v1, customMd, "", vsEdited, msEdited, js);
+    expect(r2.kind).toBe("switch");
+
+    // Visual -> Markdown: should restore user-edited markdown, not regenerate
+    const r3 = attemptModeSwitch("visual", "markdown", v1, "", "", vsEdited, msEdited, js);
+    expect(r3.kind).toBe("switch");
+    expect((r3.newState as MarkdownDraftState).value).toBe(customMd);
+  });
+
+  // Scenario E: JSON -> Visual lossy generated-target follows same invariant
+  it("E: json->visual lossy with generated target shows lossy confirmation", () => {
+    const vs = makeInitialVisualState(undefined);
+    const ms = makeInitialMarkdownState(undefined);
+    const js = makeInitialJsonState(undefined);
+
+    const jsonSimple = JSON.stringify([
+      { type: "paragraph", paragraph: { rich_text: [{ type: "text", text: { content: "ok" } }] } },
+    ]);
+
+    const jsonWithImage = JSON.stringify([
+      { type: "image", image: { url: "https://example.com/pic.png" } },
+    ]);
+
+    // JSON -> Visual (lossless, generates visual draft)
+    const r1 = attemptModeSwitch("json", "visual", [], "", jsonSimple, vs, ms, js);
+    expect(r1.kind).toBe("switch");
+    const vsGenerated = r1.newState as VisualDraftState;
+    expect(vsGenerated.status).toBe("generated");
+
+    // JSON -> Visual again with lossy JSON (target is generated, conversion lossy)
+    const jsUserEdited = { status: "user-edited" as const, value: jsonWithImage };
+    const r2 = attemptModeSwitch("json", "visual", [], "", jsonWithImage, vsGenerated, ms, jsUserEdited);
+    expect(r2.kind).toBe("show-lossy-confirmation");
+    expect(r2.unsupportedFeatures).toContain('"image" block');
+  });
+});

@@ -108,25 +108,6 @@ export function attemptModeSwitch(
   }
 
   const sourceValue = getCurrentValue(source, visual, markdown, json);
-
-  if (targetProv.status === "generated") {
-    const conv = getConversionSupport(source, targetMode, sourceValue);
-    if (conv.supported) {
-      return {
-        kind: "switch",
-        targetMode,
-        newState: {
-          status: "generated",
-          value: conv.convertedValue as any,
-          generatedFrom: source,
-          conversion: conv.lossless ? "lossless" : "lossy",
-        },
-      };
-    }
-    return { kind: "switch", targetMode, newState: targetProv };
-  }
-
-  // uninitialized
   const conv = getConversionSupport(source, targetMode, sourceValue);
 
   if (conv.supported && conv.lossless) {
@@ -149,6 +130,11 @@ export function attemptModeSwitch(
       unsupportedFeatures: conv.unsupportedFeatures,
       convertedValue: conv.convertedValue,
     };
+  }
+
+  // unsupported conversion
+  if (targetProv.status === "generated") {
+    return { kind: "switch", targetMode, newState: targetProv };
   }
 
   return {
