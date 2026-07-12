@@ -1,4 +1,6 @@
 import type { VisualBlock } from "./types";
+import { blockRegistry } from "./registry";
+import { cloneVisualBlockWithFreshIds } from "./cloneBlock";
 
 export function findBlockById(
   blocks: VisualBlock[],
@@ -46,8 +48,7 @@ export function duplicateBlock(blocks: VisualBlock[], blockId: string): VisualBl
   const source = findBlockById(blocks, blockId);
   if (!source) return blocks;
 
-  const clone: VisualBlock = JSON.parse(JSON.stringify(source.block));
-  clone.id = crypto.randomUUID();
+  const clone = cloneVisualBlockWithFreshIds(source.block);
 
   source.parent.splice(source.index + 1, 0, clone);
   return [...blocks];
@@ -68,6 +69,9 @@ export function indentBlock(blocks: VisualBlock[], blockId: string): VisualBlock
   const prevBlock = source.parent[source.index - 1];
   if (!prevBlock) return blocks;
 
+  const prevDef = blockRegistry[prevBlock.type];
+  if (!prevDef || prevDef.canHaveChildren !== true) return blocks;
+
   const [removed] = source.parent.splice(source.index, 1);
 
   if (!prevBlock.children) {
@@ -78,15 +82,34 @@ export function indentBlock(blocks: VisualBlock[], blockId: string): VisualBlock
   return [...blocks];
 }
 
+function findParentBlock(
+  blocks: VisualBlock[],
+  targetChildren: VisualBlock[],
+): { block: VisualBlock; parent: VisualBlock[]; index: number } | null {
+  for (let i = 0; i < blocks.length; i++) {
+    if (blocks[i].children === targetChildren) {
+      return { block: blocks[i], parent: blocks, index: i };
+    }
+    const children = blocks[i].children;
+    if (children && children.length > 0) {
+      const found = findParentBlock(children, targetChildren);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 export function outdentBlock(blocks: VisualBlock[], blockId: string): VisualBlock[] {
   const source = findBlockById(blocks, blockId);
   if (!source) return blocks;
 
-  const parent = findBlockById(blocks, source.parent === blocks ? "" : "");
-  if (!parent || parent.parent === blocks) return blocks;
+  if (source.parent === blocks) return blocks;
+
+  const parentBlock = findParentBlock(blocks, source.parent);
+  if (!parentBlock) return blocks;
 
   const [removed] = source.parent.splice(source.index, 1);
-  parent.parent.splice(parent.index + 1, 0, removed);
+  parentBlock.parent.splice(parentBlock.index + 1, 0, removed);
 
   return [...blocks];
 }

@@ -87,7 +87,7 @@ export const partialNotionSchema = z.object({
   pageSize: z.number().min(1).max(100).optional(),
   startCursor: z.string().optional(),
   returnAll: z.boolean().optional(),
-  maxItems: z.number().max(10000).optional(),
+  maxItems: z.number().min(1).max(10000).optional(),
 
   position: contentPositionSchema.optional(),
 

@@ -61,6 +61,7 @@ export type BlockDefinition = {
   type: VisualBlockType;
   label: string;
   icon: string;
+  canHaveChildren: boolean;
   createDefault: () => VisualBlock;
   toNotionBlock: (block: VisualBlock) => Record<string, any>;
 };
@@ -103,4 +104,32 @@ export type NotionToolResult = QueryResult | CreateResult | UpdateResult | Retri
 
 export type ConversionResult =
   | { success: true; blocks: VisualBlock[] }
-  | { success: false; unsupportedFeatures: string[] };
+  | { success: false; unsupportedFeatures: string[]; partialBlocks: VisualBlock[] };
+
+export type EditorMode = "visual" | "markdown" | "json";
+
+export type VisualDraftState = {
+  status: "uninitialized" | "generated" | "user-edited";
+  value: VisualBlock[];
+  generatedFrom?: EditorMode;
+  conversion?: "lossless" | "lossy";
+};
+
+export type MarkdownDraftState = {
+  status: "uninitialized" | "generated" | "user-edited";
+  value: string;
+  generatedFrom?: EditorMode;
+  conversion?: "lossless" | "lossy";
+};
+
+export type JsonDraftState = {
+  status: "uninitialized" | "generated" | "user-edited";
+  value: string;
+  generatedFrom?: EditorMode;
+  conversion?: "lossless" | "lossy";
+};
+
+export type BlockDragPayload = {
+  blockId: string;
+  parentId: string | null;
+};

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/stores";
 import { Button } from "@/components/ui/button";
@@ -177,6 +177,14 @@ export function NotionConfig({
   );
   const [appendContent, setAppendContent] = useState<NotionContent | undefined>(config?.content);
 
+  // Normalize position when append content switches to markdown
+  useEffect(() => {
+    if (appendContent?.mode === "markdown" && appendPosition === "after_block") {
+      setAppendPosition("end");
+      setAppendAfterBlockId("");
+    }
+  }, [appendContent?.mode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // JSON validation
   const filterValidation = useJsonValidation(filterJson);
   const sortsValidation = useJsonValidation(sortsJson);
@@ -184,10 +192,10 @@ export function NotionConfig({
   const updatePropsValidation = useJsonValidation(updatePropertiesJson);
 
   const hasJsonErrors =
-    (!filterJson.trim() ? false : !filterValidation.isValid && !filterValidation.isExpression) ||
-    (!sortsJson.trim() ? false : !sortsValidation.isValid && !sortsValidation.isExpression) ||
-    (!propertiesJson.trim() ? false : !createPropsValidation.isValid && !createPropsValidation.isExpression) ||
-    (!updatePropertiesJson.trim() ? false : !updatePropsValidation.isValid && !updatePropsValidation.isExpression);
+    (!filterJson.trim() ? false : !filterValidation.isValid) ||
+    (!sortsJson.trim() ? false : !sortsValidation.isValid) ||
+    (!propertiesJson.trim() ? false : !createPropsValidation.isValid) ||
+    (!updatePropertiesJson.trim() ? false : !updatePropsValidation.isValid);
 
   const handleCredentialCreated = useCallback((newId: string) => {
     setShowCreateForm(false);
@@ -599,19 +607,24 @@ export function NotionConfig({
                 <div className="p-4">
                   <label className="text-sm font-medium text-[#111827] mb-1.5 block">Position</label>
                   <div className="flex gap-2 mb-2">
-                    {(["start", "end", "after_block"] as const).map((p) => (
+                    {(["start", "end", "after_block"] as const).map((p) => {
+                      const isAfterBlockDisabled = p === "after_block" && appendContent?.mode === "markdown";
+                      return (
                       <button
                         key={p}
+                        disabled={isAfterBlockDisabled}
                         onClick={() => setAppendPosition(p)}
                         className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           appendPosition === p
                             ? "bg-[#F5F5FF] text-[#5B5CEB] border border-[#C7C8FF]"
                             : "bg-[#F8F9FC] text-[#6B7280] border border-[#E7E7E7] hover:border-[#C7C8FF]"
-                        }`}
+                        } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        title={isAfterBlockDisabled ? "Markdown append does not support after-block positioning" : p === "after_block" ? "Insert after a specific block" : ""}
                       >
                         {p === "start" ? "Start" : p === "end" ? "End" : "After Block"}
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
                   {appendPosition === "after_block" && (
                     <input

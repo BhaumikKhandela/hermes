@@ -643,6 +643,7 @@ export function ToolConfigSheet() {
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-4 py-6">
             <NotionConfig
+              key={selectedNode.id}
               nodeId={selectedNode.id}
               credentialId={existingCredentialId}
               config={existingConfig}
