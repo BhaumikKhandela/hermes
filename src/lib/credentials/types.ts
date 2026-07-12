@@ -16,6 +16,8 @@ export const CredentialProviders = [
   "redis",
   "notion",
   "slack",
+  "discord",
+  "discord-webhook",
 ] as const;
 
 export const AuthMethods = [

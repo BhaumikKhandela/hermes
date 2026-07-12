@@ -36,6 +36,7 @@ import { SheetConfig } from "./SheetConfig";
 import { CalendarConfig } from "./CalendarConfig";
 import { NotionConfig } from "./notion/NotionConfig";
 import { SlackConfig } from "./slack/SlackConfig";
+import { DiscordConfig } from "./discord/DiscordConfig";
 import {
   Combobox,
   ComboboxInput,
@@ -673,6 +674,35 @@ export function ToolConfigSheet() {
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-4 py-6">
             <SlackConfig
+              key={selectedNode.id}
+              nodeId={selectedNode.id}
+              credentialId={existingCredentialId}
+              config={existingConfig}
+              credentials={credentials}
+              loading={loading}
+              onClose={handleClose}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  if (nodeReg === "discord") {
+    return (
+      <Sheet open onOpenChange={(open) => !open && handleClose()}>
+        <SheetContent side="right" className="w-[420px] sm:max-w-[420px]">
+          <SheetHeader>
+            <SheetTitle>
+              <InlineRenameTitle
+                nodeId={selectedNode.id}
+                label={selectedNode.data?.label || "Discord"}
+              />
+            </SheetTitle>
+            <SheetDescription>Execute Discord Bot API actions across 17 categories: messages, channels, threads, guilds, roles, webhooks, and more.</SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-4 py-6">
+            <DiscordConfig
               key={selectedNode.id}
               nodeId={selectedNode.id}
               credentialId={existingCredentialId}

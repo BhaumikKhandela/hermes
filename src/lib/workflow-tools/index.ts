@@ -14,6 +14,7 @@ import { createNotionTool } from "./tools/notion";
 import { createCalendarTool } from "./tools/calendar";
 import { createEmailTool } from "./tools/email";
 import { createSlackTool } from "./tools/slack";
+import { createDiscordTool } from "./tools/discord";
 import { createChartTool } from "./tools/charts";
 import { createPostgresTool, createMySQLTool, createMongoDBTool } from "./tools/database";
 
@@ -96,6 +97,12 @@ register({
 register({
   nodeRegistry: "notion", factory: createNotionTool, category: "integration", label: "Notion", description: "Query, create, update, and retrieve Notion pages and databases", icon: "notion",
   credentialRequirement: { providers: ["notion"], authMethods: ["apiKey"] },
+  configFields: [],
+});
+
+register({
+  nodeRegistry: "discord", factory: createDiscordTool, category: "communication", label: "Discord", description: "Execute Discord Bot API actions across 17 categories: messages, channels, threads, guilds, roles, webhooks, and more", icon: "discord",
+  credentialRequirement: { providers: ["discord"], authMethods: ["apiKey"] },
   configFields: [],
 });
 
