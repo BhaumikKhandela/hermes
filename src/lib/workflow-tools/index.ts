@@ -1,6 +1,5 @@
 import { register } from "./registry";
 import { createModelTool } from "./tools/model";
-import { createReadFileTool, createWriteFileTool, createReadAndUpdateFileTool } from "./tools/fileSystem";
 import { createSearchTool } from "./tools/search";
 import { createWebscraperTool } from "./tools/webscraper";
 import { createMemoryTool } from "./tools/memory";
@@ -15,7 +14,8 @@ import { createCalendarTool } from "./tools/calendar";
 import { createEmailTool } from "./tools/email";
 import { createSlackTool } from "./tools/slack";
 import { createDiscordTool } from "./tools/discord";
-import { createChartTool } from "./tools/charts";
+import { createObjectStorageTool } from "./tools/object-storage";
+import { createChartTool } from "./tools/charts/index";
 import { createPostgresTool, createMySQLTool, createMongoDBTool } from "./tools/database";
 
 register({
@@ -107,34 +107,26 @@ register({
 });
 
 register({
+  nodeRegistry: "objectStorage", factory: createObjectStorageTool, category: "storage", label: "Object Storage", description: "Store and retrieve objects in S3, R2, GCS, and Azure Blob with 11 operations: put, read, delete, copy, move, list, metadata, presigned URLs, and existence checks", icon: "database",
+  credentialRequirement: { providers: ["s3", "r2", "gcs", "azure-blob"], authMethods: ["accessKey", "serviceAccount", "connectionString"] },
+  configFields: [],
+});
+
+register({
   nodeRegistry: "sendMail", factory: createEmailTool, category: "communication", label: "Send Mail", description: "Send emails via SMTP", icon: "mail",
   featured: true,
   credentialRequirement: { providers: ["smtp"], authMethods: ["smtp"] },
 });
 
 register({
-  nodeRegistry: "chart", factory: createChartTool, category: "utility", label: "Chart", description: "Generate pie/line charts via QuickChart", icon: "bar-chart",
+  nodeRegistry: "chart", factory: createChartTool, category: "utility", label: "Chart", description: "Generate pie, line, bar, doughnut, radar, polar area, and bubble charts via QuickChart. Supports optional API key for higher rate limits.", icon: "bar-chart",
+  credentialRequirement: { providers: ["quickchart"], authMethods: ["apiKey"] },
   configFields: [],
 });
 
 register({
   nodeRegistry: "slack", factory: createSlackTool, category: "communication", label: "Slack", description: "Send, update, delete, and retrieve Slack messages, reactions, pins, conversations, users, files, bookmarks, canvases, and search", icon: "slack",
   credentialRequirement: { providers: ["slack"], authMethods: ["apiKey"] },
-  configFields: [],
-});
-
-register({
-  nodeRegistry: "readFile", factory: createReadFileTool, category: "utility", label: "Read File", description: "Read files from project workspace", icon: "file",
-  configFields: [],
-});
-
-register({
-  nodeRegistry: "writeFile", factory: createWriteFileTool, category: "utility", label: "Write File", description: "Write files to project workspace", icon: "file-plus",
-  configFields: [],
-});
-
-register({
-  nodeRegistry: "readAndUpdateFile", factory: createReadAndUpdateFileTool, category: "utility", label: "Edit File", description: "Find-replace content in a file", icon: "file-edit",
   configFields: [],
 });
 

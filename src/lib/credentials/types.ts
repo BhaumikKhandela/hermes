@@ -18,10 +18,16 @@ export const CredentialProviders = [
   "slack",
   "discord",
   "discord-webhook",
+  "s3",
+  "r2",
+  "gcs",
+  "azure-blob",
+  "quickchart",
 ] as const;
 
 export const AuthMethods = [
   "apiKey",
+  "accessKey",
   "serviceAccount",
   "smtp",
   "userPassword",

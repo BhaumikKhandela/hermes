@@ -51,9 +51,6 @@ const NODE_REGISTRY_ICON_MAP: Record<string, string> = {
   calendarEvent: "calendar",
   sendMail: "gmail",
   chart: "bar-chart",
-  readFile: "file",
-  writeFile: "file-plus",
-  readAndUpdateFile: "file-edit",
   postgresDB: "postgres",
   mysqlDB: "mysql",
   mongoDB: "mongo",
@@ -69,6 +66,7 @@ const NODE_REGISTRY_ICON_MAP: Record<string, string> = {
   slack: "slack",
   discord: "discord",
   notion: "notion",
+  objectStorage: "database",
 };
 
 const MODEL_ICON_MAP: Record<string, string> = {
