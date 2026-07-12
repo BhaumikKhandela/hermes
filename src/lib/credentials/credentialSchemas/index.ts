@@ -3,7 +3,7 @@ import type { CredentialProvider, AuthMethod } from "../types";
 export type CredentialField = {
   key: string;
   label: string;
-  type: "text" | "password" | "url" | "number";
+  type: "text" | "password" | "url" | "number" | "textarea";
   placeholder?: string;
   required?: boolean;
 };
@@ -203,5 +203,46 @@ const credentialSchemas: CredentialSchema[] = [
       { key: "webhookToken", label: "Webhook Token", type: "password", placeholder: "A1B2C3d4E5F6...", required: true },
     ],
     testAction: "get_webhook",
+  },
+  {
+    provider: "s3",
+    authMethod: "accessKey",
+    fields: [
+      { key: "accessKeyId", label: "Access Key ID", type: "text", placeholder: "AKIA...", required: true },
+      { key: "secretAccessKey", label: "Secret Access Key", type: "password", placeholder: "********", required: true },
+      { key: "region", label: "Region", type: "text", placeholder: "us-east-1", required: false },
+      { key: "endpoint", label: "Endpoint (optional)", type: "url", placeholder: "https://s3.custom.com", required: false },
+    ],
+  },
+  {
+    provider: "r2",
+    authMethod: "accessKey",
+    fields: [
+      { key: "accountId", label: "Account ID", type: "text", placeholder: "your-account-id", required: true },
+      { key: "accessKeyId", label: "Access Key ID", type: "text", placeholder: "AKIA...", required: true },
+      { key: "secretAccessKey", label: "Secret Access Key", type: "password", placeholder: "********", required: true },
+      { key: "region", label: "Region", type: "text", placeholder: "auto", required: false },
+    ],
+  },
+  {
+    provider: "gcs",
+    authMethod: "serviceAccount",
+    fields: [
+      { key: "serviceAccountJson", label: "Service Account JSON", type: "textarea", placeholder: '{"type": "service_account", ...}', required: true },
+    ],
+  },
+  {
+    provider: "azure-blob",
+    authMethod: "connectionString",
+    fields: [
+      { key: "connectionString", label: "Connection String", type: "password", placeholder: "DefaultEndpointsProtocol=https;AccountName=...", required: true },
+    ],
+  },
+  {
+    provider: "quickchart",
+    authMethod: "apiKey",
+    fields: [
+      { key: "apiKey", label: "QuickChart API Key", type: "password", placeholder: "qc_...", required: false },
+    ],
   },
 ];

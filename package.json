@@ -7,11 +7,17 @@
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "inngest": "inngest-cli dev -u http://localhost:8000/api/inngest"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1085.0",
+    "@aws-sdk/s3-request-presigner": "^3.1085.0",
+    "@azure/storage-blob": "^12.33.0",
     "@base-ui/react": "^1.3.0",
     "@discordjs/rest": "^2.6.1",
+    "@google-cloud/storage": "^7.21.0",
     "@langchain/anthropic": "^1.5.0",
     "@langchain/cerebras": "^1.0.4",
     "@langchain/cohere": "^1.0.4",
@@ -74,6 +80,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

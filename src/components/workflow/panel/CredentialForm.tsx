@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -84,13 +85,23 @@ export function CredentialForm({ schema, onCreated, onCancel }: CredentialFormPr
       {schema.fields.map((field) => (
         <div key={field.key} className="flex flex-col gap-1.5">
           <Label className="text-[13px] font-semibold text-[#111827]">{field.label}</Label>
-          <Input
-            type={field.type === "password" ? "password" : field.type === "number" ? "number" : "text"}
-            placeholder={field.placeholder}
-            value={values[field.key] || ""}
-            onChange={(e) => handleChange(field.key, e.target.value)}
-            className="rounded-xl bg-[#F5F5F5] border-[#E7E7E7] focus:bg-white focus:ring-2 focus:ring-[rgba(91,92,235,0.15)]"
-          />
+          {field.type === "textarea" ? (
+            <Textarea
+              placeholder={field.placeholder}
+              value={values[field.key] || ""}
+              onChange={(e) => handleChange(field.key, e.target.value)}
+              rows={6}
+              className="min-h-[120px] resize-y rounded-xl bg-[#F5F5F5] border-[#E7E7E7] focus:bg-white focus:ring-2 focus:ring-[rgba(91,92,235,0.15)]"
+            />
+          ) : (
+            <Input
+              type={field.type === "password" ? "password" : field.type === "number" ? "number" : "text"}
+              placeholder={field.placeholder}
+              value={values[field.key] || ""}
+              onChange={(e) => handleChange(field.key, e.target.value)}
+              className="rounded-xl bg-[#F5F5F5] border-[#E7E7E7] focus:bg-white focus:ring-2 focus:ring-[rgba(91,92,235,0.15)]"
+            />
+          )}
         </div>
       ))}
 

@@ -37,6 +37,8 @@ import { CalendarConfig } from "./CalendarConfig";
 import { NotionConfig } from "./notion/NotionConfig";
 import { SlackConfig } from "./slack/SlackConfig";
 import { DiscordConfig } from "./discord/DiscordConfig";
+import { ObjectStorageConfig } from "./object-storage/ObjectStorageConfig";
+import { ChartConfig } from "./charts/ChartConfig";
 import {
   Combobox,
   ComboboxInput,
@@ -717,6 +719,64 @@ export function ToolConfigSheet() {
     );
   }
 
+  if (nodeReg === "objectStorage") {
+    return (
+      <Sheet open onOpenChange={(open) => !open && handleClose()}>
+        <SheetContent side="right" className="w-[420px] sm:max-w-[420px]">
+          <SheetHeader>
+            <SheetTitle>
+              <InlineRenameTitle
+                nodeId={selectedNode.id}
+                label={selectedNode.data?.label || "Object Storage"}
+              />
+            </SheetTitle>
+            <SheetDescription>Store and retrieve objects in S3, R2, GCS, and Azure Blob.</SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-4 py-6">
+            <ObjectStorageConfig
+              key={selectedNode.id}
+              nodeId={selectedNode.id}
+              credentialId={existingCredentialId}
+              config={existingConfig}
+              credentials={credentials}
+              loading={loading}
+              onClose={handleClose}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  if (nodeReg === "chart") {
+    return (
+      <Sheet open onOpenChange={(open) => !open && handleClose()}>
+        <SheetContent side="right" className="w-[420px] sm:max-w-[420px]">
+          <SheetHeader>
+            <SheetTitle>
+              <InlineRenameTitle
+                nodeId={selectedNode.id}
+                label={selectedNode.data?.label || "Chart"}
+              />
+            </SheetTitle>
+            <SheetDescription>Generate charts from data via QuickChart. Add a QuickChart API key to avoid rate limits.</SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-4 py-6">
+            <ChartConfig
+              key={selectedNode.id}
+              nodeId={selectedNode.id}
+              credentialId={existingCredentialId}
+              config={existingConfig}
+              credentials={credentials}
+              loading={loading}
+              onClose={handleClose}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
   if (nodeReg === "search") {
     return (
       <Sheet open onOpenChange={(open) => !open && handleClose()}>
@@ -841,9 +901,9 @@ export function ToolConfigSheet() {
     <Sheet open onOpenChange={(open) => !open && handleClose()}>
       <SheetContent side="right" className="w-[420px] sm:max-w-[420px]">
         <SheetHeader>
-          <SheetTitle>{isModelNode ? (regForModel?.label ?? "Model") : reg.label}</SheetTitle>
+          <SheetTitle>{isModelNode ? (regForModel?.label ?? "Model") : reg!.label}</SheetTitle>
           {regForModel?.description && <SheetDescription>{regForModel.description}</SheetDescription>}
-          {!isModelNode && reg.description && <SheetDescription>{reg.description}</SheetDescription>}
+          {!isModelNode && reg!.description && <SheetDescription>{reg!.description}</SheetDescription>}
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
@@ -923,13 +983,13 @@ export function ToolConfigSheet() {
                 </>
               ) : null}
 
-              {reg.configFields && reg.configFields.length > 0 && (
+              {reg!.configFields && reg!.configFields.length > 0 && (
                 <>
         
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13px] font-semibold text-[#111827]">Node Configuration</label>
                     <ToolConfigForm
-                      fields={reg.configFields}
+                      fields={reg!.configFields}
                       values={config}
                       onChange={(key, value) => setConfig((prev) => ({ ...prev, [key]: value }))}
                     />
