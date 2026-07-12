@@ -274,8 +274,10 @@ export const toolMetadatas: ToolMetadata[] = [
     nodeRegistry: "slack",
     category: "communication",
     label: "Slack",
-    description: "Send and read Slack messages",
+    description: "Send, update, delete, and retrieve Slack messages, reactions, pins, conversations, users, files, bookmarks, canvases, and search",
     icon: "slack",
+    credentialRequirement: { providers: ["slack"], authMethods: ["apiKey"] },
+    configFields: [],
   },
   {
     nodeRegistry: "discord",

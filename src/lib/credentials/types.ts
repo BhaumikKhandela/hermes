@@ -15,6 +15,7 @@ export const CredentialProviders = [
   "mongodb",
   "redis",
   "notion",
+  "slack",
 ] as const;
 
 export const AuthMethods = [

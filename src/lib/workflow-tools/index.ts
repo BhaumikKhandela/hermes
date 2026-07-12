@@ -13,6 +13,7 @@ import { createSheetTool } from "./tools/sheets";
 import { createNotionTool } from "./tools/notion";
 import { createCalendarTool } from "./tools/calendar";
 import { createEmailTool } from "./tools/email";
+import { createSlackTool } from "./tools/slack";
 import { createChartTool } from "./tools/charts";
 import { createPostgresTool, createMySQLTool, createMongoDBTool } from "./tools/database";
 
@@ -106,6 +107,12 @@ register({
 
 register({
   nodeRegistry: "chart", factory: createChartTool, category: "utility", label: "Chart", description: "Generate pie/line charts via QuickChart", icon: "bar-chart",
+  configFields: [],
+});
+
+register({
+  nodeRegistry: "slack", factory: createSlackTool, category: "communication", label: "Slack", description: "Send, update, delete, and retrieve Slack messages, reactions, pins, conversations, users, files, bookmarks, canvases, and search", icon: "slack",
+  credentialRequirement: { providers: ["slack"], authMethods: ["apiKey"] },
   configFields: [],
 });
 

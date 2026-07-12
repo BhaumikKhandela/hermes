@@ -22,6 +22,7 @@
     "@notionhq/client": "^5.23.0",
     "@pinecone-database/pinecone": "^7.2.0",
     "@reduxjs/toolkit": "^2.11.2",
+    "@slack/web-api": "^7.19.0",
     "@xyflow/react": "^12.10.2",
     "better-auth": "^1.6.2",
     "class-variance-authority": "^0.7.1",

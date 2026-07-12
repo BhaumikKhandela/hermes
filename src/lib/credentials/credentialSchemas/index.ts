@@ -179,4 +179,12 @@ const credentialSchemas: CredentialSchema[] = [
     ],
     testAction: "search across workspace",
   },
+  {
+    provider: "slack",
+    authMethod: "apiKey",
+    fields: [
+      { key: "apiKey", label: "Bot / User OAuth Token", type: "password", placeholder: "xoxb-... or xoxp-...", required: true },
+    ],
+    testAction: "auth.test",
+  },
 ];
