@@ -283,8 +283,10 @@ export const toolMetadatas: ToolMetadata[] = [
     nodeRegistry: "discord",
     category: "communication",
     label: "Discord",
-    description: "Send and read Discord messages",
+    description: "Execute Discord Bot API actions across 17 categories: messages, channels, threads, guilds, roles, webhooks, and more",
     icon: "discord",
+    credentialRequirement: { providers: ["discord"], authMethods: ["apiKey"] },
+    configFields: [],
   },
   {
     nodeRegistry: "notion",

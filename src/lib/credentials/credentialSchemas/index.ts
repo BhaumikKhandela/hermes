@@ -187,4 +187,21 @@ const credentialSchemas: CredentialSchema[] = [
     ],
     testAction: "auth.test",
   },
+  {
+    provider: "discord",
+    authMethod: "apiKey",
+    fields: [
+      { key: "apiKey", label: "Bot Token", type: "password", placeholder: "MTE...", required: true },
+    ],
+    testAction: "get_current_user",
+  },
+  {
+    provider: "discord-webhook",
+    authMethod: "apiKey",
+    fields: [
+      { key: "webhookId", label: "Webhook ID", type: "text", placeholder: "123456789012345678", required: true },
+      { key: "webhookToken", label: "Webhook Token", type: "password", placeholder: "A1B2C3d4E5F6...", required: true },
+    ],
+    testAction: "get_webhook",
+  },
 ];
